@@ -36,5 +36,5 @@ const server = http.createServer(async (request, response) => {
 });
 
 server.listen(port, "127.0.0.1", () => {
-  console.log(`PolitiCore is running at http://127.0.0.1:${port}`);
+  console.log(`Civitas is running at http://127.0.0.1:${port}`);
 });

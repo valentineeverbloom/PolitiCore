@@ -1,5 +1,6 @@
 import {
   topics as sourceTopics,
+  civitasCategories as sourceCivitasCategories,
   articles as sourceArticles,
   glossary as sourceGlossary,
   countries as sourceCountries,
@@ -7,7 +8,23 @@ import {
   events as sourceEvents,
   sources as sourceSources,
   relationships as sourceRelationships,
+  learningNodes as sourceLearningNodes,
+  learningPaths as sourceLearningPaths,
+  learningCheck as sourceLearningCheck,
 } from "./data.js";
+
+import {
+  TIMELINE_DATASET_VERSION,
+  TIMELINE_LAST_VERIFIED_AT,
+  timelinePeriods as sourceTimelinePeriods,
+  timelineRegions as sourceTimelineRegions,
+  timelineCategories as sourceTimelineCategories,
+  timelineSources as sourceTimelineSources,
+  timelineEntities as sourceTimelineEntities,
+  timelineCountryDirectory as sourceTimelineCountryDirectory,
+  timelineEvents as sourceTimelineEvents,
+  timelineCoverage as sourceTimelineCoverage,
+} from "./timeline-data.js";
 
 const englishCopy = {
   topics: {
@@ -101,6 +118,30 @@ const englishCopy = {
       content: [
         { heading: "Scope", paragraphs: ["The 2013 Constitution is the document with the highest legal force in Vietnam’s legal system. It sets out principles concerning the political system, human and citizen rights, the organization of state institutions, national defence, foreign affairs, and constitutional amendment procedures."] },
         { heading: "Reading sources", paragraphs: ["To understand a particular institution, read the relevant provisions, implementing legislation, and current official sources directly. This overview does not replace legal advice or an authoritative interpretation."] },
+      ],
+    },
+    "what-is-politics": {
+      title: "What Is Politics?", slug: "what-is-politics", readTime: "5 min read",
+      summary: "An entry point for thinking about how people make collective decisions, allocate resources, and work through disagreement in shared life.",
+      content: [
+        { heading: "What it includes", paragraphs: ["Politics does not happen only in parliaments, parties, or elections. In a broad sense, it concerns how a community handles matters it must decide together: who has a voice, what is prioritized, and which rules are considered fair."] },
+        { heading: "A lens for beginning", paragraphs: ["Three questions can offer a start: what is the shared problem, who can influence the decision, and how is that decision explained or checked? They do not supply a single answer, but they help separate description, evidence, and value judgments as you read further."] },
+      ],
+    },
+    "political-power": {
+      title: "Political Power", slug: "political-power", readTime: "6 min read",
+      summary: "The capacity to shape collective decisions, set rules, or affect how resources and opportunities are distributed in society.",
+      content: [
+        { heading: "More than commands", paragraphs: ["Political power can appear through law, institutions, resources, information, recognized authority, or the capacity to organize others. Looking only at formal titles is therefore rarely enough to understand who can influence a public decision."] },
+        { heading: "The question of limits", paragraphs: ["Studying power often goes with questions of legitimacy, accountability, and checks. An institution may be designed to allocate authority, but how it works also depends on rules, context, and the people participating in it."] },
+      ],
+    },
+    "public-policy": {
+      title: "What Is Public Policy?", slug: "public-policy", readTime: "6 min read",
+      summary: "The choices, actions, and sometimes inaction of public authorities in response to shared problems.",
+      content: [
+        { heading: "From problem to choice", paragraphs: ["Public policy often begins with how a problem is recognized and placed on an agenda. Options can differ in their aims, costs, affected groups, and measures of success. There is no single formula for turning a social problem into good policy."] },
+        { heading: "Reading policy in context", paragraphs: ["When reading a policy, ask which problem is being defined, what evidence is being used, who participates in the choice, where resources come from, and which results will be followed. These questions help distinguish a policy description from a political evaluation of it."] },
       ],
     },
   },
@@ -366,6 +407,226 @@ try {
 
 let { topics, articles, glossary, countries, ideologies, events, sources, relationships, fullTaxonomy } = collectionsForLanguage(currentLanguage);
 const app = document.querySelector("#app");
+const civitasCategories = sourceCivitasCategories.map((category) => ({
+  ...category,
+  domainIds: [...new Set(category.domainIds || [])],
+  articleIds: [...new Set(category.articleIds || [])],
+}));
+const timelinePeriods = sourceTimelinePeriods.map((item) => ({ ...item }));
+const timelineRegions = sourceTimelineRegions.map((item) => ({ ...item }));
+const timelineCategories = sourceTimelineCategories.map((item) => ({ ...item }));
+const timelineSources = sourceTimelineSources.map((item) => ({ ...item }));
+const timelineEntities = sourceTimelineEntities.map((item) => ({ ...item }));
+const timelineCountryDirectory = sourceTimelineCountryDirectory.map((item) => ({ ...item }));
+const timelineEvents = sourceTimelineEvents.map((item) => ({ ...item }));
+const timelineCoverage = { ...sourceTimelineCoverage };
+const learningNodes = sourceLearningNodes.map((node) => ({
+  ...node,
+  prerequisiteIds: [...new Set(node.prerequisiteIds || [])],
+}));
+const learningPaths = sourceLearningPaths.map((path) => ({ ...path, nodeIds: [...new Set(path.nodeIds || [])] }));
+const learningCheck = sourceLearningCheck.map((item) => ({ ...item }));
+const LEARNING_PROGRESS_KEY = "civitas-learning-progress-v1";
+const LEGACY_LEARNING_PROGRESS_KEY = "politicore-learning-progress-v1";
+const BOOKMARKS_KEY = "civitas-bookmarks-v1";
+const LEARNING_STATUSES = new Set(["not_started", "read", "learning", "mastered", "review", "skipped"]);
+
+const learningProfiles = [
+  {
+    id: "new",
+    label: "Tôi chưa biết gì về chính trị",
+    labelEn: "I am new to politics",
+    description: "Bắt đầu bằng các khái niệm nền tảng và không cần làm khảo sát ngay.",
+    descriptionEn: "Start with core concepts; no assessment is required.",
+    pathId: "start",
+  },
+  {
+    id: "basic",
+    label: "Tôi đã có kiến thức cơ bản",
+    labelEn: "I already know the basics",
+    description: "Kiểm tra nhanh kiến thức nền rồi đi vào nhánh bạn quan tâm.",
+    descriptionEn: "Take a quick check, then move into a branch you care about.",
+    pathId: "institutions",
+  },
+  {
+    id: "uneven",
+    label: "Kiến thức của tôi chưa đồng đều",
+    labelEn: "My knowledge is uneven",
+    description: "Đánh dấu phần đã nắm và để hệ thống chỉ ra các nền tảng còn thiếu.",
+    descriptionEn: "Mark what you know and surface the foundations you may be missing.",
+    pathId: "start",
+  },
+  {
+    id: "focus",
+    label: "Tôi muốn học một lĩnh vực cụ thể",
+    labelEn: "I want to study one field",
+    description: "Chọn nhánh; bài viết luôn mở tự do, kể cả khi còn nền tảng gợi ý.",
+    descriptionEn: "Choose a branch; articles always remain open even with suggested foundations.",
+    pathId: "elections",
+  },
+  {
+    id: "analysis",
+    label: "Tôi muốn rèn phân tích chính sách / nghiên cứu",
+    labelEn: "I want to build analysis skills",
+    description: "Đi từ khái niệm và thiết chế đến cách đọc nguồn, tiêu chí và giới hạn.",
+    descriptionEn: "Move from concepts and institutions to reading sources, criteria, and limitations.",
+    pathId: "institutions",
+  },
+  {
+    id: "self",
+    label: "Tôi tự xây lộ trình",
+    labelEn: "I will build my own path",
+    description: "Tự chọn nhánh và trạng thái học; hệ thống chỉ đưa ra gợi ý minh bạch.",
+    descriptionEn: "Choose branches and learning states yourself; the system only gives transparent suggestions.",
+    pathId: "start",
+  },
+];
+
+function emptyLearningProgress() {
+  return {
+    version: 2,
+    profile: { entryMode: "new", activePathId: "start", selfAssessedIds: [] },
+    nodes: {},
+    readArticles: {},
+    checks: {},
+    updatedAt: null,
+  };
+}
+
+function hasLearningNode(id) {
+  return learningNodes.some((node) => node.id === id);
+}
+
+function normalizeLearningProgress(raw) {
+  const clean = emptyLearningProgress();
+  if (!raw || typeof raw !== "object") return clean;
+  const profile = raw.profile && typeof raw.profile === "object" ? raw.profile : {};
+  clean.profile.entryMode = learningProfiles.some((item) => item.id === profile.entryMode) ? profile.entryMode : clean.profile.entryMode;
+  clean.profile.activePathId = learningPaths.some((item) => item.id === profile.activePathId) ? profile.activePathId : clean.profile.activePathId;
+  clean.profile.selfAssessedIds = Array.isArray(profile.selfAssessedIds) ? profile.selfAssessedIds.filter(hasLearningNode) : [];
+
+  if (raw.nodes && typeof raw.nodes === "object") {
+    Object.entries(raw.nodes).forEach(([nodeId, entry]) => {
+      if (!hasLearningNode(nodeId) || !entry || typeof entry !== "object" || !LEARNING_STATUSES.has(entry.status)) return;
+      clean.nodes[nodeId] = {
+        status: entry.status,
+        updatedAt: typeof entry.updatedAt === "string" ? entry.updatedAt : null,
+      };
+    });
+  }
+
+  if (raw.readArticles && typeof raw.readArticles === "object") {
+    Object.entries(raw.readArticles).forEach(([articleId, updatedAt]) => {
+      if (!sourceArticles.some((article) => article.id === articleId) || typeof updatedAt !== "string") return;
+      clean.readArticles[articleId] = updatedAt;
+    });
+  }
+
+  if (raw.checks && typeof raw.checks === "object") {
+    Object.entries(raw.checks).forEach(([checkId, entry]) => {
+      const check = learningCheck.find((item) => item.id === checkId);
+      if (!check || !entry || typeof entry !== "object") return;
+      clean.checks[checkId] = {
+        attempts: Number.isFinite(entry.attempts) ? Math.max(0, entry.attempts) : 0,
+        selectedIndex: Number.isInteger(entry.selectedIndex) ? entry.selectedIndex : null,
+        correct: typeof entry.correct === "boolean" ? entry.correct : null,
+        attemptedAt: typeof entry.attemptedAt === "string" ? entry.attemptedAt : null,
+      };
+    });
+  }
+
+  clean.updatedAt = typeof raw.updatedAt === "string" ? raw.updatedAt : null;
+  return clean;
+}
+
+function loadLearningProgress() {
+  try {
+    const saved = localStorage.getItem(LEARNING_PROGRESS_KEY) || localStorage.getItem(LEGACY_LEARNING_PROGRESS_KEY);
+    return normalizeLearningProgress(JSON.parse(saved || "null"));
+  } catch {
+    return emptyLearningProgress();
+  }
+}
+
+let learningProgress = loadLearningProgress();
+
+function saveLearningProgress() {
+  learningProgress.updatedAt = new Date().toISOString();
+  try {
+    localStorage.setItem(LEARNING_PROGRESS_KEY, JSON.stringify(learningProgress));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function learningNodeProgress(nodeId) {
+  return learningProgress.nodes[nodeId] || { status: "not_started", updatedAt: null };
+}
+
+function learningStatus(nodeId) {
+  return learningNodeProgress(nodeId).status;
+}
+
+function setLearningStatus(nodeId, status) {
+  if (!hasLearningNode(nodeId) || !LEARNING_STATUSES.has(status)) return false;
+  if (status === "not_started") {
+    delete learningProgress.nodes[nodeId];
+  } else {
+    learningProgress.nodes[nodeId] = { status, updatedAt: new Date().toISOString() };
+  }
+  return saveLearningProgress();
+}
+
+function isArticleRead(articleId) {
+  return Boolean(learningProgress.readArticles[articleId] || learningStatus(articleId) === "read");
+}
+
+function setArticleRead(articleId, read = true) {
+  if (!sourceArticles.some((article) => article.id === articleId)) return false;
+  if (read) learningProgress.readArticles[articleId] = new Date().toISOString();
+  else delete learningProgress.readArticles[articleId];
+  return saveLearningProgress();
+}
+
+function loadBookmarks() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(BOOKMARKS_KEY) || "[]");
+    return new Set(Array.isArray(raw) ? raw.filter((id) => sourceArticles.some((article) => article.id === id)) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+let bookmarkedArticleIds = loadBookmarks();
+
+function isBookmarked(articleId) {
+  return bookmarkedArticleIds.has(articleId);
+}
+
+function saveBookmarks() {
+  try {
+    localStorage.setItem(BOOKMARKS_KEY, JSON.stringify([...bookmarkedArticleIds]));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function toggleBookmark(articleId) {
+  if (!sourceArticles.some((article) => article.id === articleId)) return false;
+  if (bookmarkedArticleIds.has(articleId)) bookmarkedArticleIds.delete(articleId);
+  else bookmarkedArticleIds.add(articleId);
+  return saveBookmarks();
+}
+
+function selectLearningProfile(profileId) {
+  const profile = learningProfiles.find((item) => item.id === profileId);
+  if (!profile) return false;
+  learningProgress.profile.entryMode = profile.id;
+  learningProgress.profile.activePathId = profile.pathId;
+  return saveLearningProgress();
+}
 
 const state = {
   searchOpen: false,
@@ -377,6 +638,9 @@ const state = {
   timelineTag: "all",
   compareLeft: ideologies[0]?.slug || "",
   compareRight: ideologies[1]?.slug || ideologies[0]?.slug || "",
+  learningMap: { x: 0, y: 0, scale: 1 },
+  roadmapGoalOpen: false,
+  suppressLandingIntro: false,
 };
 let languageRenderTimer;
 let themeTransitionTimer;
@@ -398,13 +662,13 @@ function currentRecordByReference(reference, currentRecords, sourceRecords, tran
 function updateDocumentLanguage() {
   document.documentElement.lang = currentLanguage;
   document.title = currentLanguage === "vi"
-    ? "PolitiCore — Tri thức chính trị, có kết nối"
-    : "PolitiCore — Political Knowledge, Connected";
+    ? "civitas. — một thư viện nhỏ về chính trị"
+    : "civitas. — a little library of politics";
   const description = document.querySelector('meta[name="description"]');
   if (description) {
     description.content = currentLanguage === "vi"
-      ? "PolitiCore — Bách khoa tri thức chính trị kết nối khái niệm, thể chế, lịch sử và nguồn tư liệu."
-      : "PolitiCore — a connected political knowledge library for concepts, institutions, history, and source material.";
+      ? "Civitas — một thư viện nhỏ, ấm áp để khám phá chính trị, con người và cách thế giới vận hành."
+      : "Civitas — a cozy little library for exploring politics, people, and how the world works.";
   }
   const skipLink = document.querySelector(".skip-link");
   if (skipLink) skipLink.textContent = currentLanguage === "vi" ? "Bỏ qua điều hướng" : "Skip to content";
@@ -771,6 +1035,8 @@ function routeFor(record) {
   if (record.type === "country") return `country/${record.slug}`;
   if (record.type === "ideology") return `ideology/${record.slug}`;
   if (record.type === "glossary") return `glossary?term=${encodeURIComponent(record.term)}`;
+  if (record.type === "timeline-event") return `timeline/event/${record.slug}`;
+  if (record.type === "timeline-entity") return `timeline/entity/${record.id}`;
   if (record.type === "event") return "timeline";
   if (record.type === "source") return "sources";
   return "home";
@@ -802,6 +1068,14 @@ function icon(name, size = 18) {
     network: `<svg ${attrs}><circle cx="6" cy="6" r="2.3"></circle><circle cx="18" cy="7" r="2.3"></circle><circle cx="12" cy="18" r="2.3"></circle><path d="m7.9 7.3 7.9-.7M7.3 7.9l3.5 8M16.9 8.8l-3.4 7"></path></svg>`,
     external: `<svg ${attrs}><path d="M14 4h6v6"></path><path d="M20 4 10 14"></path><path d="M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6"></path></svg>`,
     copy: `<svg ${attrs}><rect x="8" y="8" width="12" height="12" rx="1"></rect><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"></path></svg>`,
+    bookmark: `<svg ${attrs}><path d="M6 4.7A1.7 1.7 0 0 1 7.7 3h8.6A1.7 1.7 0 0 1 18 4.7V21l-6-3.7L6 21V4.7Z"></path></svg>`,
+    check: `<svg ${attrs}><path d="m5 12 4.2 4.2L19.5 6"></path></svg>`,
+    compass: `<svg ${attrs}><circle cx="12" cy="12" r="8.5"></circle><path d="m14.8 9.2-2 4.7-4.6 1.9 2-4.6 4.6-2Z"></path></svg>`,
+    spark: `<svg ${attrs}><path d="m12 3 1.55 5.45L19 10l-5.45 1.55L12 17l-1.55-5.45L5 10l5.45-1.55L12 3Z"></path><path d="m19 16 .7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16Z"></path></svg>`,
+    landmark: `<svg ${attrs}><path d="M3 20h18M5 18h14M4 9h16L12 4 4 9ZM7 10v7M12 10v7M17 10v7"></path></svg>`,
+    leaf: `<svg ${attrs}><path d="M20 4C11 4.5 5.5 8.5 5.5 15.2A4.8 4.8 0 0 0 10.3 20C17 20 19.5 12.3 20 4Z"></path><path d="M4 20c3.4-4.4 7.1-7.2 12-9.4"></path></svg>`,
+    globe: `<svg ${attrs}><circle cx="12" cy="12" r="8.5"></circle><path d="M3.8 12h16.4M12 3.5c2.1 2.3 3.2 5.1 3.2 8.5S14.1 18.2 12 20.5C9.9 18.2 8.8 15.4 8.8 12S9.9 5.8 12 3.5Z"></path></svg>`,
+    clock: `<svg ${attrs}><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7v5l3.5 2.2"></path></svg>`,
   };
   return icons[name] || "";
 }
@@ -827,33 +1101,242 @@ function articlePath(reference, fallback = articles[0]?.slug || "") {
   return articleByReference(reference)?.slug || fallback;
 }
 
+function bilingualText(vietnamese, english) {
+  return currentLanguage === "en" ? english : vietnamese;
+}
+
+function civitasCategoryTitle(category) {
+  return currentLanguage === "en" ? (category?.titleEn || category?.title || "") : (category?.title || "");
+}
+
+function civitasCategoryDescription(category) {
+  return currentLanguage === "en" ? (category?.descriptionEn || category?.description || "") : (category?.description || "");
+}
+
+function sourceArticleById(articleId) {
+  return sourceArticles.find((article) => article.id === articleId);
+}
+
+function civitasCategoryForArticle(article) {
+  const sourceArticle = sourceArticleById(article?.id);
+  const domainId = sourceArticle?.domain;
+  return civitasCategories.find((category) => category.articleIds.includes(article?.id))
+    || civitasCategories.find((category) => category.domainIds.includes(domainId))
+    || civitasCategories[0];
+}
+
+function articleCategoryLabel(article) {
+  return civitasCategoryTitle(civitasCategoryForArticle(article));
+}
+
+function learningNodeById(nodeId) {
+  return learningNodes.find((node) => node.id === nodeId);
+}
+
+function learningPathById(pathId) {
+  return learningPaths.find((path) => path.id === pathId);
+}
+
+function articleForLearningNode(node) {
+  return node ? articleByReference(node.articleId) : undefined;
+}
+
+function learningNodeTitle(node) {
+  return articleForLearningNode(node)?.title || node?.articleId || "";
+}
+
+function learningNodeRoute(node) {
+  const article = articleForLearningNode(node);
+  return `#article/${encodeURIComponent(article?.slug || node?.articleId || "")}`;
+}
+
+function learningRoute(pathId, nodeId = "") {
+  const params = new URLSearchParams();
+  if (pathId) params.set("path", pathId);
+  if (nodeId) params.set("node", nodeId);
+  return `roadmap${params.size ? `?${params.toString()}` : ""}`;
+}
+
+function mapRoute(categoryId = "all", nodeId = "", mode = "overview", query = "") {
+  const params = new URLSearchParams();
+  if (categoryId && categoryId !== "all") params.set("category", categoryId);
+  if (nodeId) params.set("node", nodeId);
+  if (mode && mode !== "overview") params.set("mode", mode);
+  if (query) params.set("q", query);
+  return `map${params.size ? `?${params.toString()}` : ""}`;
+}
+
+function learningTrackMeta(track) {
+  const tracks = {
+    foundations: ["Nền tảng", "Foundations"],
+    institutions: ["Thể chế", "Institutions"],
+    elections: ["Bầu cử", "Elections"],
+    comparative: ["So sánh", "Comparative politics"],
+    ideologies: ["Tư tưởng", "Ideologies"],
+    international: ["Quốc tế", "International"],
+    vietnam: ["Việt Nam", "Vietnam"],
+    policy: ["Chính sách công", "Public policy"],
+  };
+  const [vietnamese, english] = tracks[track] || ["Khám phá", "Explore"];
+  return bilingualText(vietnamese, english);
+}
+
+function learningLevel(node) {
+  return currentLanguage === "en" ? (node?.levelEn || node?.level || "") : (node?.level || "");
+}
+
+function learningGoal(node) {
+  return currentLanguage === "en" ? (node?.learningGoalEn || node?.learningGoal || "") : (node?.learningGoal || "");
+}
+
+function learningPathTitle(path) {
+  return currentLanguage === "en" ? (path?.titleEn || path?.title || "") : (path?.title || "");
+}
+
+function learningPathDescription(path) {
+  return currentLanguage === "en" ? (path?.descriptionEn || path?.description || "") : (path?.description || "");
+}
+
+function learningStatusLabel(status) {
+  const labels = {
+    not_started: ["Chưa học", "Not started"],
+    read: ["Đã đọc", "Read"],
+    learning: ["Đang học", "Learning"],
+    mastered: ["Đã nắm vững", "Mastered"],
+    review: ["Cần ôn tập", "Needs review"],
+    skipped: ["Bỏ qua lúc này", "Skipped for now"],
+  };
+  const [vietnamese, english] = labels[status] || labels.not_started;
+  return bilingualText(vietnamese, english);
+}
+
+function learningStatusSymbol(status) {
+  return {
+    not_started: "○",
+    read: "◌",
+    learning: "◐",
+    mastered: "✓",
+    review: "↺",
+    skipped: "—",
+  }[status] || "○";
+}
+
+function learningPrerequisites(node) {
+  return (node?.prerequisiteIds || []).map(learningNodeById).filter(Boolean);
+}
+
+function prerequisiteSatisfied(nodeId) {
+  return learningStatus(nodeId) === "mastered";
+}
+
+function missingPrerequisites(node) {
+  return learningPrerequisites(node).filter((item) => !prerequisiteSatisfied(item.id));
+}
+
+function pathNodeIdsWithPrerequisites(pathId) {
+  const path = learningPathById(pathId);
+  const selected = new Set();
+  const visit = (nodeId) => {
+    if (selected.has(nodeId)) return;
+    const node = learningNodeById(nodeId);
+    if (!node) return;
+    selected.add(nodeId);
+    learningPrerequisites(node).forEach((prerequisite) => visit(prerequisite.id));
+  };
+  (path?.nodeIds || learningNodes.map((node) => node.id)).forEach(visit);
+  return selected;
+}
+
+function recommendedLearningNodes(pathId) {
+  const included = pathNodeIdsWithPrerequisites(pathId);
+  const candidates = learningNodes.filter((node) => included.has(node.id) && !["mastered", "skipped"].includes(learningStatus(node.id)));
+  return candidates.sort((left, right) => {
+    const leftStatus = learningStatus(left.id);
+    const rightStatus = learningStatus(right.id);
+    const leftPriority = leftStatus === "review" ? -2 : leftStatus === "learning" ? -1 : 0;
+    const rightPriority = rightStatus === "review" ? -2 : rightStatus === "learning" ? -1 : 0;
+    if (leftPriority !== rightPriority) return leftPriority - rightPriority;
+    const missingDifference = missingPrerequisites(left).length - missingPrerequisites(right).length;
+    if (missingDifference) return missingDifference;
+    return learningNodeTitle(left).localeCompare(learningNodeTitle(right), currentLanguage);
+  });
+}
+
+function learningProgressCounts() {
+  const counts = { read: 0, learning: 0, mastered: 0, review: 0 };
+  learningNodes.forEach((node) => {
+    const status = learningStatus(node.id);
+    if (Object.hasOwn(counts, status)) counts[status] += 1;
+  });
+  return counts;
+}
+
+function validateLearningGraph() {
+  const errors = [];
+  const nodeIds = new Set(learningNodes.map((node) => node.id));
+
+  learningNodes.forEach((node) => {
+    if (!articleByReference(node.articleId)) errors.push(`missing article: ${node.articleId}`);
+    (node.prerequisiteIds || []).forEach((id) => {
+      if (!nodeIds.has(id)) errors.push(`missing prerequisite: ${node.id} → ${id}`);
+    });
+  });
+
+  const visiting = new Set();
+  const visited = new Set();
+  const visit = (nodeId) => {
+    if (visiting.has(nodeId)) {
+      errors.push(`prerequisite cycle at: ${nodeId}`);
+      return;
+    }
+    if (visited.has(nodeId)) return;
+    visiting.add(nodeId);
+    learningPrerequisites(learningNodeById(nodeId)).forEach((node) => visit(node.id));
+    visiting.delete(nodeId);
+    visited.add(nodeId);
+  };
+  learningNodes.forEach((node) => visit(node.id));
+  return errors;
+}
+
+const learningGraphIssues = validateLearningGraph();
+if (learningGraphIssues.length) console.warn("PolitiCore learning graph validation:", learningGraphIssues);
+
 function header(activeRoute) {
   const nav = [
-    ["home", "Khám phá"],
-    ["encyclopedia", "Bách khoa"],
-    ["glossary", "Thuật ngữ"],
-    ["countries", "Quốc gia"],
-    ["compare", "So sánh"],
-    ["timeline", "Dòng thời gian"],
-    ["sources", "Nguồn tư liệu"],
+    ["home", bilingualText("Khám phá", "Explore")],
+    ["encyclopedia", bilingualText("Bách khoa", "Encyclopedia")],
+    ["timeline", bilingualText("Timeline lịch sử", "History timeline")],
+    ["map", bilingualText("Bản đồ", "Map")],
+    ["roadmap", bilingualText("Lộ trình", "Roadmap")],
   ];
-  const normalized = activeRoute.startsWith("article") ? "encyclopedia" : activeRoute.startsWith("country") ? "countries" : activeRoute.startsWith("ideology") ? "compare" : activeRoute;
+  const normalized = activeRoute.startsWith("article")
+    ? "encyclopedia"
+    : activeRoute.startsWith("timeline/")
+      ? "timeline"
+      : activeRoute === "learning"
+        ? "roadmap"
+        : activeRoute;
+  const isLanding = normalized === "home";
 
   return `
-    <div class="utility-bar">
-      <div class="utility-mark"><span class="status-dot"></span> THƯ VIỆN THAM CHIẾU · BẢN DEMO CÓ NGUỒN</div>
-      <div class="utility-note">Phi đảng phái · Ưu tiên bằng chứng &amp; ngữ cảnh</div>
-    </div>
-    <header class="site-header">
+    <header class="site-header civitas-header ${isLanding ? "is-landing" : ""}">
       <div class="header-inner">
-        <a class="brand" href="#home" aria-label="PolitiCore — trang chủ">
-          <span class="brand-mark" aria-hidden="true"></span><span>PolitiCore</span>
+        <a class="brand civitas-brand" href="#home" aria-label="Civitas — ${bilingualText("trang chủ", "home")}">
+          <span class="brand-mark" aria-hidden="true">${icon("book", 16)}</span>
+          <span class="brand-lockup"><span class="brand-name">civitas.</span><small>${bilingualText("một thư viện nhỏ về chính trị", "a little library of politics")}</small></span>
         </a>
-        <nav class="main-nav" aria-label="Điều hướng chính">
+        <nav class="main-nav civitas-nav" aria-label="${bilingualText("Điều hướng chính", "Primary navigation")}">
           ${nav.map(([route, label]) => `<a href="#${route}" class="${normalized === route ? "active" : ""}" ${normalized === route ? 'aria-current="page"' : ""}>${label}</a>`).join("")}
         </nav>
         <div class="header-actions">
-          <div class="language-switch is-${currentLanguage}" role="group" aria-label="Chọn ngôn ngữ">
+          <a class="saved-trigger" href="#encyclopedia?saved=1" aria-label="${bilingualText("Bài đã lưu", "Saved articles")}">
+            ${icon("bookmark", 17)}<span>${bilingualText("Đã lưu", "Saved")}</span>${bookmarkedArticleIds.size ? `<b>${bookmarkedArticleIds.size}</b>` : ""}
+          </a>
+          <button class="search-trigger civitas-search-trigger" type="button" data-action="open-search" aria-label="${bilingualText("Mở tìm kiếm", "Open search")}">
+            ${icon("search", 17)}<span>${bilingualText("Tìm", "Search")}</span>
+          </button>
+          <div class="language-switch is-${currentLanguage}" role="group" aria-label="${bilingualText("Chọn ngôn ngữ", "Choose language")}">
             <button class="${currentLanguage === "en" ? "active" : ""}" type="button" data-language="en" aria-label="Tiếng Anh" aria-pressed="${currentLanguage === "en"}">EN</button>
             <button class="${currentLanguage === "vi" ? "active" : ""}" type="button" data-language="vi" aria-label="Tiếng Việt" aria-pressed="${currentLanguage === "vi"}">VI</button>
           </div>
@@ -863,43 +1346,40 @@ function header(activeRoute) {
               <span class="theme-toggle-glyph theme-toggle-moon">${icon("moon", 14)}</span>
             </span>
           </button>
-          <button class="search-trigger" type="button" data-action="open-search" aria-label="Mở tìm kiếm">
-            ${icon("search", 16)}<span>Tìm kiếm</span><span class="key-hint">⌘K</span>
-          </button>
-          <button class="icon-button menu-button" type="button" data-action="toggle-menu" aria-label="Mở menu">
-            ${icon("menu", 19)}
+          <button class="icon-button menu-button" type="button" data-action="toggle-menu" aria-label="${bilingualText("Mở menu khám phá", "Open explore menu")}">
+            ${icon("menu", 19)}<span class="landing-menu-label">${bilingualText("Khám phá", "Explore")}</span>
           </button>
         </div>
       </div>
     </header>
     <nav class="mobile-nav" id="mobile-nav" aria-label="Điều hướng di động" hidden>
       ${nav.map(([route, label]) => `<a href="#${route}" ${normalized === route ? 'aria-current="page"' : ""}>${label}</a>`).join("")}
-      <a href="#about">Về PolitiCore</a>
+      <a href="#encyclopedia?saved=1">${bilingualText("Bài đã lưu", "Saved articles")}</a>
+      <a href="#about">${bilingualText("Về Civitas", "About Civitas")}</a>
     </nav>
   `;
 }
 
 function footer() {
   return `
-    <footer class="site-footer">
+    <footer class="site-footer civitas-footer">
       <div class="footer-inner">
         <div>
-          <a class="footer-brand" href="#home"><span class="brand-mark" aria-hidden="true"></span><span>PolitiCore</span></a>
-          <p class="footer-copy">Một cấu trúc tham chiếu để kết nối khái niệm, thể chế, lịch sử và bằng chứng — không phải một dòng tin tức hay lời kêu gọi chính trị.</p>
+          <a class="footer-brand" href="#home"><span class="brand-mark" aria-hidden="true">${icon("book", 15)}</span><span>civitas.</span></a>
+          <p class="footer-copy">${bilingualText("Một góc nhỏ để đọc về chính trị, con người và cách thế giới vận hành — chậm rãi, có ngữ cảnh và có đường dẫn để kiểm tra.", "A small place to read about politics, people, and how the world works—slowly, in context, with paths to verify.")}</p>
         </div>
         <nav class="footer-nav" aria-label="Điều hướng chân trang">
-          <a href="#encyclopedia">Bách khoa</a>
-          <a href="#glossary">Thuật ngữ</a>
-          <a href="#countries">Hồ sơ quốc gia</a>
-          <a href="#compare">So sánh</a>
-          <a href="#timeline">Dòng thời gian</a>
-          <a href="#sources">Thư viện nguồn</a>
-          <a href="#about">Nguyên tắc biên tập</a>
+          <a href="#encyclopedia">${bilingualText("Bách khoa", "Encyclopedia")}</a>
+          <a href="#timeline">${bilingualText("Timeline lịch sử", "History timeline")}</a>
+          <a href="#map">${bilingualText("Bản đồ tri thức", "Knowledge map")}</a>
+          <a href="#roadmap">${bilingualText("Lộ trình", "Roadmap")}</a>
+          <a href="#sources">${bilingualText("Nguồn tư liệu", "Sources")}</a>
+          <a href="#about">${bilingualText("Nguyên tắc biên tập", "Editorial notes")}</a>
         </nav>
       </div>
       <div class="footer-bottom">
-        <span>POLITICORE · LOCAL REFERENCE DEMO</span>
-        <span>Dữ liệu minh hoạ có liên kết nguồn gốc · Không thay thế nghiên cứu chuyên môn</span>
+        <span>CIVITAS · LOCAL LIBRARY DEMO</span>
+        <span>${bilingualText("Nội dung mẫu cần biên tập trước khi xuất bản · Không thay thế nghiên cứu chuyên môn", "Sample content requires editorial review before publication · Not a substitute for specialist research")}</span>
       </div>
     </footer>
   `;
@@ -950,7 +1430,7 @@ function atlasSvg() {
   `;
 }
 
-function renderHome() {
+function renderLegacyHome() {
   const feature = articles.find((item) => item.id === "democracy") || articles[0];
   const homeTopics = topics.slice(0, 6);
   const homeEvents = events.slice(0, 4);
@@ -972,6 +1452,10 @@ function renderHome() {
           <div class="suggested-searches" aria-label="Gợi ý tìm kiếm">
             <span class="suggested-label">Bắt đầu với</span>
             ${["Dân chủ", "Chủ quyền", "Phân quyền", "Chủ nghĩa tự do", "Tính chính danh"].map((term) => `<button class="search-chip" type="button" data-search-term="${term}">${term}</button>`).join("")}
+          </div>
+          <div class="hero-learning-links">
+            <a class="hero-learning-primary" href="#learning?path=start">${bilingualText("Xây dựng lộ trình học của tôi", "Build my learning path")} <span aria-hidden="true">→</span></a>
+            <a class="hero-learning-secondary" href="#learning">${bilingualText("Khám phá bản đồ kiến thức", "Explore the knowledge map")}</a>
           </div>
           <div class="hero-proof" aria-label="Phạm vi thư viện">
             <div class="proof-item"><span class="proof-value">${topics.length}</span><span class="proof-label">miền tri thức<br />có thể mở rộng</span></div>
@@ -1113,6 +1597,83 @@ function renderHome() {
   `;
 }
 
+function civitasMapPreview() {
+  const nodes = [
+    { id: "what-is-politics", label: bilingualText("Chính trị", "Politics"), x: 50, y: 50, main: true },
+    { id: "political-power", label: bilingualText("Quyền lực", "Power"), x: 19, y: 26 },
+    { id: "sovereignty", label: bilingualText("Chủ quyền", "Sovereignty"), x: 77, y: 22 },
+    { id: "constitutionalism", label: bilingualText("Hiến pháp", "Constitution"), x: 83, y: 71 },
+    { id: "democracy", label: bilingualText("Dân chủ", "Democracy"), x: 19, y: 75 },
+    { id: "public-policy", label: bilingualText("Chính sách", "Policy"), x: 49, y: 88 },
+  ];
+  return `
+    <div class="civitas-map-preview" aria-label="${bilingualText("Xem trước bản đồ tri thức", "Knowledge map preview")}">
+      <svg viewBox="0 0 560 330" aria-hidden="true">
+        <path d="M280 154 106 79M280 154 431 68M280 154 458 234M280 154 106 249M280 154 280 289M106 79 106 249M431 68 458 234M106 249 280 289"></path>
+      </svg>
+      ${nodes.map((node) => `<a href="#article/${articlePath(node.id)}" class="civitas-preview-node ${node.main ? "is-main" : ""}" style="--x:${node.x}%;--y:${node.y}%"><span></span>${escapeHtml(node.label)}</a>`).join("")}
+    </div>
+  `;
+}
+
+function homeSearchMatches(query) {
+  const normalized = String(query || "").trim();
+  if (!normalized) return "";
+  const results = searchRecords(normalized, "article").slice(0, 5);
+  return results.length
+    ? `<div class="home-search-results-list">${results.map((record) => `
+      <a href="#article/${escapeHtml(record.slug)}"><span class="home-search-category">${escapeHtml(articleCategoryLabel(record))}</span><strong>${escapeHtml(record.title)}</strong><small>${escapeHtml(record.summary)}</small><i aria-hidden="true">→</i></a>
+    `).join("")}</div>`
+    : `<div class="home-search-empty">${bilingualText("Chưa tìm thấy mục phù hợp. Thử một khái niệm ngắn hơn.", "No matching entry yet. Try a shorter concept.")}</div>`;
+}
+
+function renderHome() {
+  const feature = articleByReference("what-is-politics") || articles[0];
+  const portals = [
+    ["01", "encyclopedia", bilingualText("Bách khoa", "Encyclopedia"), bilingualText("Khái niệm, thể chế và các ghi chú để lần theo.", "Concepts, institutions, and notes to follow."), icon("book", 18)],
+    ["02", "timeline", bilingualText("Timeline lịch sử", "History timeline"), bilingualText("Đi qua thế giới từ dấu vết đầu tiên đến hiện tại.", "Move through the world from its earliest evidence to the present."), icon("clock", 18)],
+    ["03", "map", bilingualText("Bản đồ tri thức", "Knowledge map"), bilingualText("Nhìn ý tưởng cạnh nhau, rồi chọn đường đi riêng.", "See ideas beside each other, then choose your own path."), icon("network", 18)],
+    ["04", "roadmap", bilingualText("Lộ trình học", "Learning roadmap"), bilingualText("Một lộ trình gợi ý, không có cánh cửa nào bị khóa.", "A suggested path, with no locked doors."), icon("compass", 18)],
+  ];
+  return `
+    <div class="civitas-home civitas-home--landing">
+      <section class="civitas-landing">
+        <div class="civitas-landing-backdrop" aria-hidden="true"></div>
+        <div class="civitas-landing-grain" aria-hidden="true"></div>
+        <div class="civitas-landing-atlas" aria-hidden="true">
+          <svg viewBox="0 0 1280 820" preserveAspectRatio="xMidYMid slice">
+            <g class="landing-atlas-motion">
+              <g class="landing-atlas-grid"><path d="M-40 188C224 80 419 111 614 270s363 181 706 64M-18 582C214 450 433 483 605 620s424 138 700-76M326-44C236 201 288 362 468 456s183 223 83 433M1027-30c-93 229-46 400 111 520s104 246-9 375"></path><circle cx="618" cy="274" r="127"></circle><circle cx="618" cy="274" r="276"></circle><circle cx="618" cy="274" r="405"></circle></g>
+              <g class="landing-atlas-lines"><line x1="142" y1="618" x2="618" y2="274"></line><line x1="618" y1="274" x2="1089" y2="561"></line><line x1="618" y1="274" x2="912" y2="118"></line><line x1="618" y1="274" x2="360" y2="143"></line></g>
+              <g class="landing-atlas-nodes"><circle cx="618" cy="274" r="7"></circle><circle cx="142" cy="618" r="4"></circle><circle cx="1089" cy="561" r="4"></circle><circle cx="912" cy="118" r="4"></circle><circle cx="360" cy="143" r="4"></circle></g>
+              <g class="landing-atlas-signals">
+                <circle r="3.1"><animateMotion dur="22s" begin="-8s" repeatCount="indefinite" path="M142 618 L618 274"></animateMotion><animate attributeName="opacity" dur="22s" begin="-8s" values="0;1;1;0" keyTimes="0;.08;.9;1" repeatCount="indefinite"></animate></circle>
+                <circle r="2.8"><animateMotion dur="18s" begin="-3s" repeatCount="indefinite" path="M618 274 L1089 561"></animateMotion><animate attributeName="opacity" dur="18s" begin="-3s" values="0;1;1;0" keyTimes="0;.08;.9;1" repeatCount="indefinite"></animate></circle>
+                <circle r="3"><animateMotion dur="25s" begin="-14s" repeatCount="indefinite" path="M912 118 L618 274"></animateMotion><animate attributeName="opacity" dur="25s" begin="-14s" values="0;1;1;0" keyTimes="0;.08;.9;1" repeatCount="indefinite"></animate></circle>
+                <circle r="2.7"><animateMotion dur="20s" begin="-11s" repeatCount="indefinite" path="M618 274 L360 143"></animateMotion><animate attributeName="opacity" dur="20s" begin="-11s" values="0;1;1;0" keyTimes="0;.08;.9;1" repeatCount="indefinite"></animate></circle>
+              </g>
+            </g>
+          </svg>
+          <span class="landing-atlas-label label-one">${bilingualText("khoảng 300.000 năm trước", "c. 300,000 BP")}</span><span class="landing-atlas-label label-two">CIVITAS / 01</span><span class="landing-atlas-label label-three">${bilingualText("THẾ GIỚI CHUNG", "THE COMMON WORLD")}</span>
+        </div>
+        <div class="page-width civitas-landing-shell">
+          <div class="civitas-landing-copy">
+            <p class="civitas-landing-kicker">${bilingualText("MỘT THƯ VIỆN NHỎ VỀ THẾ GIỚI CHUNG", "A LITTLE LIBRARY FOR OUR COMMON WORLD")}</p>
+            <h1 class="civitas-landing-title"><span>civitas</span><i>.</i></h1>
+            <p class="civitas-landing-statement">${bilingualText("Đọc chậm về quyền lực, lịch sử và những câu chuyện định hình đời sống chung.", "A slow read on power, history, and the stories that shape our common life.")}</p>
+            <a class="civitas-landing-entry" href="#article/${feature.slug}"><span>${bilingualText("Mở một ghi chú để bắt đầu", "Open one note to begin")}</span><i>↗</i></a>
+          </div>
+          <nav class="civitas-portal" aria-label="${bilingualText("Các lối vào thư viện", "Library entrances")}">
+            <p>${bilingualText("CHỌN MỘT LỐI VÀO", "CHOOSE AN ENTRANCE")}</p>
+            ${portals.map(([index, route, title, description, glyph]) => `<a class="civitas-portal-link" href="#${route}"><span class="civitas-portal-index">${index}</span><span class="civitas-portal-glyph">${glyph}</span><span class="civitas-portal-text"><strong>${escapeHtml(title)}</strong><small>${escapeHtml(description)}</small></span><i>→</i></a>`).join("")}
+          </nav>
+          <div class="civitas-landing-footer"><span>${bilingualText("Đọc theo ngữ cảnh · theo dấu nguồn · tự chọn đường", "Read in context · follow sources · choose your path")}</span><a href="#timeline/coverage">${timelineEvents.length} ${bilingualText("hồ sơ lịch sử đang được mở rộng", "history records being expanded")} ↗</a></div>
+        </div>
+      </section>
+    </div>
+  `;
+}
+
 function countryCard(country) {
   return `
     <a class="country-card" href="#country/${country.slug}">
@@ -1147,7 +1708,7 @@ function pageHero(kicker, title, lede, crumbs = []) {
   `;
 }
 
-function renderEncyclopedia(params) {
+function renderLegacyEncyclopedia(params) {
   const selected = params.get("domain") || "all";
   const matchingTopics = selected === "all"
     ? topics
@@ -1182,7 +1743,7 @@ function renderEncyclopedia(params) {
   `;
 }
 
-function articleTile(article) {
+function renderLegacyArticleTile(article) {
   return `
     <a class="article-tile" href="#article/${article.slug}">
       ${statusLine(article)}
@@ -1197,7 +1758,110 @@ function emptyState(title, description) {
   return `<div class="empty-state"><h2>${escapeHtml(title)}</h2><p>${escapeHtml(description)}</p></div>`;
 }
 
-function renderArticle(slug) {
+function learningNodeForArticle(articleId) {
+  return learningNodes.find((node) => node.articleId === articleId);
+}
+
+function articleLevel(article) {
+  const node = learningNodeForArticle(article?.id);
+  return node ? learningLevel(node) : bilingualText("Khám phá", "Explore");
+}
+
+function encyclopediaRoute({ category = "all", level = "all", saved = false, query = "" } = {}) {
+  const params = new URLSearchParams();
+  if (category !== "all") params.set("category", category);
+  if (level !== "all") params.set("level", level);
+  if (saved) params.set("saved", "1");
+  if (query) params.set("q", query);
+  return `encyclopedia${params.size ? `?${params.toString()}` : ""}`;
+}
+
+function renderEncyclopedia(params) {
+  const selectedCategory = civitasCategories.some((category) => category.id === params.get("category")) ? params.get("category") : "all";
+  const selectedLevel = ["all", "intro", "intermediate"].includes(params.get("level")) ? params.get("level") : "all";
+  const showSaved = params.get("saved") === "1";
+  const query = (params.get("q") || "").trim();
+  const normalizedQuery = query.toLocaleLowerCase(currentLanguage);
+  const records = articles.filter((article) => {
+    const category = civitasCategoryForArticle(article);
+    const node = learningNodeForArticle(article.id);
+    const level = node?.level === "Trung cấp" ? "intermediate" : "intro";
+    const text = [article.title, article.summary, articleCategoryLabel(article)].join(" ").toLocaleLowerCase(currentLanguage);
+    return (selectedCategory === "all" || category.id === selectedCategory)
+      && (selectedLevel === "all" || level === selectedLevel)
+      && (!showSaved || isBookmarked(article.id))
+      && (!normalizedQuery || text.includes(normalizedQuery));
+  });
+
+  return `
+    <section class="civitas-page-heading">
+      <div class="page-width"><nav class="civitas-breadcrumb" aria-label="Breadcrumb"><a href="#home">${bilingualText("Khám phá", "Explore")}</a><span>/</span><span>${bilingualText("Bách khoa", "Encyclopedia")}</span></nav><p class="civitas-eyebrow">THE LITTLE LIBRARY</p><h1>${bilingualText("Bách khoa toàn thư", "The encyclopedia")}</h1><p>${bilingualText("Đọc tự do, theo một câu hỏi, một chủ đề hoặc bất kỳ điểm vào nào phù hợp với bạn.", "Read freely—through a question, a topic, or any entry point that fits you.")}</p></div>
+    </section>
+    <section class="page-width civitas-encyclopedia">
+      <form class="civitas-library-search" data-encyclopedia-search>
+        ${icon("search", 19)}<input name="query" value="${escapeHtml(query)}" autocomplete="off" placeholder="${bilingualText("Tìm bài viết trong thư viện...", "Search the library...")}" aria-label="${bilingualText("Tìm bài viết", "Search articles")}" /><button type="submit">${bilingualText("Tìm", "Search")}</button>
+      </form>
+      <div class="civitas-library-layout">
+        <aside class="civitas-library-sidebar" aria-label="${bilingualText("Bộ lọc bách khoa", "Encyclopedia filters")}">
+          <div class="civitas-filter-group"><span>${bilingualText("Chủ đề", "Topics")}</span>
+            <button class="${selectedCategory === "all" ? "active" : ""}" type="button" data-route="${encyclopediaRoute({ level: selectedLevel, saved: showSaved, query })}">${bilingualText("Tất cả bài viết", "All articles")}<small>${articles.length}</small></button>
+            ${civitasCategories.map((category) => `<button class="${selectedCategory === category.id ? "active" : ""}" type="button" data-route="${encyclopediaRoute({ category: category.id, level: selectedLevel, saved: showSaved, query })}">${escapeHtml(civitasCategoryTitle(category))}<small>${articles.filter((article) => civitasCategoryForArticle(article).id === category.id).length}</small></button>`).join("")}
+          </div>
+          <div class="civitas-filter-group"><span>${bilingualText("Trình độ", "Level")}
+            <button class="${selectedLevel === "all" ? "active" : ""}" type="button" data-route="${encyclopediaRoute({ category: selectedCategory, saved: showSaved, query })}">${bilingualText("Mọi trình độ", "All levels")}</button>
+            <button class="${selectedLevel === "intro" ? "active" : ""}" type="button" data-route="${encyclopediaRoute({ category: selectedCategory, level: "intro", saved: showSaved, query })}">${bilingualText("Nhập môn", "Introductory")}</button>
+            <button class="${selectedLevel === "intermediate" ? "active" : ""}" type="button" data-route="${encyclopediaRoute({ category: selectedCategory, level: "intermediate", saved: showSaved, query })}">${bilingualText("Trung cấp", "Intermediate")}</button>
+          </div>
+          <button class="civitas-saved-filter ${showSaved ? "active" : ""}" type="button" data-route="${encyclopediaRoute({ category: selectedCategory, level: selectedLevel, saved: !showSaved, query })}">${icon("bookmark", 15)} ${showSaved ? bilingualText("Đang xem bài đã lưu", "Viewing saved") : bilingualText("Chỉ xem bài đã lưu", "Saved only")}</button>
+          ${(selectedCategory !== "all" || selectedLevel !== "all" || showSaved || query) ? `<a class="civitas-clear-filter" href="#encyclopedia">${bilingualText("Xóa bộ lọc", "Clear filters")}</a>` : ""}
+        </aside>
+        <section class="civitas-library-results">
+          <div class="civitas-library-result-head"><p>${showSaved ? bilingualText("Bài bạn đã lưu", "Your saved articles") : bilingualText("Những điều đang chờ được khám phá", "Ideas waiting to be explored")}</p><span>${records.length} ${bilingualText("bài viết", "articles")}</span></div>
+          <div class="civitas-article-grid">
+            ${records.length ? records.map(articleTile).join("") : `<div class="civitas-empty-library"><span>${icon("book", 26)}</span><h2>${showSaved ? bilingualText("Chưa có bài nào được lưu", "No saved articles yet") : bilingualText("Chưa thấy bài phù hợp", "No matching article yet")}</h2><p>${showSaved ? bilingualText("Dùng biểu tượng đánh dấu bên cạnh bài viết để lưu lại điều bạn muốn đọc sau.", "Use the bookmark beside an article to save something for later.") : bilingualText("Thử bỏ bớt bộ lọc hoặc tìm một từ khóa khác.", "Try removing a filter or searching for another word.")}</p>${showSaved ? `<a class="civitas-button quiet" href="#encyclopedia">${bilingualText("Khám phá thư viện", "Explore the library")}</a>` : ""}</div>`}
+          </div>
+        </section>
+      </div>
+    </section>
+  `;
+}
+
+function articleTile(article) {
+  const category = civitasCategoryForArticle(article);
+  const saved = isBookmarked(article.id);
+  const read = isArticleRead(article.id);
+  return `
+    <article class="civitas-article-card ${read ? "is-read" : ""}">
+      <div class="civitas-article-card-top"><span>${escapeHtml(civitasCategoryTitle(category))}</span><button class="civitas-bookmark-button ${saved ? "is-saved" : ""}" type="button" data-bookmark="${escapeHtml(article.id)}" aria-label="${saved ? bilingualText("Bỏ lưu bài viết", "Remove saved article") : bilingualText("Lưu bài viết", "Save article")}" aria-pressed="${saved}">${icon("bookmark", 17)}</button></div>
+      <a href="#article/${encodeURIComponent(article.slug)}"><h3>${escapeHtml(article.title)}</h3><p>${escapeHtml(article.summary)}</p></a>
+      <div class="civitas-article-card-bottom"><span>${escapeHtml(article.readTime || bilingualText("6 phút đọc", "6 min read"))}</span><span>${read ? `${icon("check", 14)} ${bilingualText("Đã đọc", "Read")}` : escapeHtml(articleLevel(article))}</span></div>
+    </article>
+  `;
+}
+
+function renderArticleLearningPanel(article) {
+  const node = learningNodeById(article.id);
+  if (!node) return "";
+  const prerequisites = learningPrerequisites(node);
+
+  return `
+    <section class="article-learning-panel" aria-label="${bilingualText("Theo dõi học tập", "Learning progress")}">
+      <div class="article-learning-copy">
+        <span class="article-learning-kicker">${bilingualText("Lộ trình học tùy chọn", "Optional learning path")}</span>
+        <strong>${escapeHtml(learningLevel(node))} · ${escapeHtml(learningGoal(node))}</strong>
+        <p>${prerequisites.length
+          ? bilingualText("Nền tảng được gợi ý: ", "Suggested foundations: ") + prerequisites.map((item) => learningNodeTitle(item)).join(" · ")
+          : bilingualText("Đây là một điểm vào; bạn có thể bắt đầu trực tiếp từ bài này.", "This is an entry point; you can begin directly with this article.")}</p>
+      </div>
+      <div class="article-learning-actions">
+        ${renderLearningStatusControls(node, true)}
+        <a href="#${learningRoute(learningProgress.profile.activePathId, node.id)}">${bilingualText("Mở bản đồ học", "Open learning map")} →</a>
+      </div>
+    </section>
+  `;
+}
+
+function renderLegacyArticle(slug) {
   const article = currentRecordByReference(slug, articles, sourceArticles, englishCopy.articles);
   if (!article) return renderNotFound();
   const content = normalizedContent(article);
@@ -1222,6 +1886,7 @@ function renderArticle(slug) {
             <button class="small-action" type="button" data-action="copy-link">${icon("copy", 14)} Sao chép liên kết</button>
             <button class="small-action" type="button" data-action="cite-article">${icon("book", 14)} Trích dẫn mục này</button>
           </div>
+          ${renderArticleLearningPanel(article)}
         </header>
         <div class="article-body">
           <p class="lead">${escapeHtml(article.intro || article.summary)}</p>
@@ -1293,6 +1958,70 @@ function articleFigure(article) {
         : `<div class="power-diagram"><div class="power-node">Khái niệm<small>định nghĩa &amp; phạm vi</small></div><div class="power-node">Bối cảnh<small>lịch sử &amp; thể chế</small></div><div class="power-node">Nguồn<small>văn bản &amp; nghiên cứu</small></div></div>`}
       <figcaption>Minh hoạ cấu trúc đọc trong bản demo; không thay thế mô tả pháp lý hoặc dữ liệu thực chứng chi tiết.</figcaption>
     </figure>
+  `;
+}
+
+function relatedArticlesFor(article) {
+  const ids = new Set(article?.related || article?.relatedSlugs || []);
+  relationships.forEach((relation) => {
+    const source = String(relation.source || relation.sourceId || "").replace(/^article:/, "");
+    const target = String(relation.target || relation.targetId || "").replace(/^article:/, "");
+    if (source === article?.id && target && sourceArticles.some((item) => item.id === target)) ids.add(target);
+    if (target === article?.id && source && sourceArticles.some((item) => item.id === source)) ids.add(source);
+  });
+  return [...ids]
+    .map((id) => articleByReference(id))
+    .filter((item) => item && item.id !== article?.id)
+    .slice(0, 4);
+}
+
+function renderArticle(slug) {
+  const article = currentRecordByReference(slug, articles, sourceArticles, englishCopy.articles);
+  if (!article) return renderNotFound();
+  const content = normalizedContent(article);
+  const relatedArticles = relatedArticlesFor(article);
+  const articleSources = (article.sourceIds || []).map((id) => sources.find((source) => source.id === id)).filter(Boolean);
+  const node = learningNodeForArticle(article.id);
+  const isRead = isArticleRead(article.id);
+  const saved = isBookmarked(article.id);
+
+  return `
+    <section class="civitas-article-page">
+      <div class="page-width">
+        <nav class="civitas-breadcrumb civitas-article-breadcrumb" aria-label="Breadcrumb"><a href="#home">${bilingualText("Khám phá", "Explore")}</a><span>/</span><a href="#encyclopedia">${bilingualText("Bách khoa", "Encyclopedia")}</a><span>/</span><span>${escapeHtml(article.title)}</span></nav>
+        <div class="civitas-article-layout">
+          <aside class="civitas-article-toc">
+            <p>${bilingualText("TRONG BÀI NÀY", "IN THIS ARTICLE")}</p>
+            <nav>${content.map((section, index) => `<button type="button" data-scroll-target="article-section-${index + 1}"><i>${String(index + 1).padStart(2, "0")}</i>${escapeHtml(section.heading)}</button>`).join("")}<button type="button" data-scroll-target="article-references"><i>↗</i>${bilingualText("Nguồn đọc", "Reading list")}</button></nav>
+          </aside>
+          <article class="civitas-article-main">
+            <header>
+              <p class="civitas-article-category">${escapeHtml(articleCategoryLabel(article))}</p>
+              <h1>${escapeHtml(article.title)}</h1>
+              <p class="civitas-article-dek">${escapeHtml(article.dek || article.summary)}</p>
+              <div class="civitas-article-meta"><span>${escapeHtml(article.readTime || bilingualText("6 phút đọc", "6 min read"))}</span><span>${escapeHtml(articleLevel(article))}</span>${article.updated ? `<span>${bilingualText("Cập nhật", "Updated")} ${escapeHtml(article.updated)}</span>` : ""}</div>
+              <div class="civitas-article-actions">
+                <button class="civitas-button ${isRead ? "quiet is-active" : "forest"}" type="button" data-article-read="${escapeHtml(article.id)}" data-read-value="${isRead ? "false" : "true"}">${icon("check", 16)} ${isRead ? bilingualText("Đã đọc", "Read") : bilingualText("Đánh dấu đã đọc", "Mark as read")}</button>
+                <button class="civitas-button quiet ${saved ? "is-active" : ""}" type="button" data-bookmark="${escapeHtml(article.id)}" aria-pressed="${saved}">${icon("bookmark", 16)} ${saved ? bilingualText("Đã lưu", "Saved") : bilingualText("Lưu bài", "Save article")}</button>
+              </div>
+            </header>
+            <div class="civitas-article-body">
+              <p class="civitas-article-lead">${escapeHtml(article.intro || article.summary)}</p>
+              ${content.map((section, index) => `
+                <section id="article-section-${index + 1}"><h2>${escapeHtml(section.heading)}</h2>${section.paragraphs.map((paragraph, paragraphIndex) => `<p>${escapeHtml(paragraph)}${paragraphIndex === 0 && articleSources.length ? `<sup>[${Math.min(index + 1, articleSources.length)}]</sup>` : ""}</p>`).join("")}</section>
+                ${index === 0 ? articleFigure(article) : ""}
+              `).join("")}
+              <aside class="civitas-reading-note"><span>${icon("spark", 18)}</span><div><strong>${bilingualText("Đọc chậm một nhịp", "Pause for a moment")}</strong><p>${bilingualText("Khái niệm chính trị thường có nhiều cách dùng. Hãy để ý phạm vi, bối cảnh và nguồn của mỗi nhận định.", "Political concepts often have more than one use. Notice the scope, context, and source behind each claim.")}</p></div></aside>
+              <section class="civitas-article-references" id="article-references"><p class="civitas-eyebrow">READING LIST</p><h2>${bilingualText("Nguồn & ghi chú", "Sources & notes")}</h2>${articleSources.length ? articleSources.map((source, index) => `<a href="${escapeHtml(source.url)}" target="_blank" rel="noreferrer"><b>${String(index + 1).padStart(2, "0")}</b><span>${escapeHtml(source.title)}<small>${escapeHtml(source.publisher || source.author || source.kind || "Reference")}</small></span><i>↗</i></a>`).join("") : `<p class="civitas-demo-note">${bilingualText("Mục nội dung mẫu này chưa có danh mục nguồn riêng; cần biên tập và bổ sung trước khi xuất bản.", "This sample entry does not yet have its own reading list; it needs editorial review before publication.")}</p>`}</section>
+            </div>
+          </article>
+          <aside class="civitas-article-side">
+            <section><p class="civitas-aside-label">${bilingualText("ĐỌC TIẾP", "KEEP EXPLORING")}</p><h2>${bilingualText("Liên hệ gần", "Related ideas")}</h2>${relatedArticles.length ? `<div class="civitas-related-list">${relatedArticles.map((item) => `<a href="#article/${item.slug}"><span>${escapeHtml(articleCategoryLabel(item))}</span><strong>${escapeHtml(item.title)}</strong><i>→</i></a>`).join("")}</div>` : `<p>${bilingualText("Mục này sẽ có thêm liên hệ khi thư viện được biên tập mở rộng.", "This entry will gain more links as the library is edited and expanded.")}</p>`}</section>
+            ${node ? `<section class="civitas-article-learning"><p class="civitas-aside-label">${bilingualText("LỘ TRÌNH CỦA BẠN", "YOUR ROADMAP")}</p><h2>${escapeHtml(learningGoal(node))}</h2><p>${bilingualText("Bạn có thể chọn trạng thái riêng; điều này không khóa bất kỳ bài viết nào.", "Choose your own status; it never locks any article.")}</p>${renderLearningStatusControls(node, true)}<a href="#${learningRoute(learningProgress.profile.activePathId, node.id)}">${bilingualText("Xem trong lộ trình", "View in roadmap")} →</a></section><section class="civitas-article-check"><p class="civitas-aside-label">${bilingualText("TỰ KIỂM TRA", "SELF-CHECK")}</p>${renderLearningCheck(node)}</section>` : ""}
+          </aside>
+        </div>
+      </div>
+    </section>
   `;
 }
 
@@ -1505,33 +2234,842 @@ function renderIdeology(slug) {
   `;
 }
 
-function renderTimeline(params) {
-  const region = params.get("region") || "all";
-  const tag = params.get("tag") || "all";
-  const regions = [...new Set(events.map((event) => event.region).filter(Boolean))];
-  const tags = [...new Set(events.flatMap((event) => event.tags || []))].slice(0, 8);
-  const visible = events.filter((event) => (region === "all" || event.region === region) && (tag === "all" || (event.tags || []).includes(tag)));
+function timelineText(value) {
+  if (!value || typeof value !== "object") return String(value || "");
+  return value[currentLanguage] || value.vi || value.en || "";
+}
+
+function timelinePeriodById(id) {
+  return timelinePeriods.find((item) => item.id === id);
+}
+
+function timelineRegionById(id) {
+  return timelineRegions.find((item) => item.id === id);
+}
+
+function timelineCategoryById(id) {
+  return timelineCategories.find((item) => item.id === id);
+}
+
+function timelineEntityById(id) {
+  return timelineEntities.find((item) => item.id === id);
+}
+
+function timelineCountryById(id) {
+  return timelineCountryDirectory.find((item) => item.id === id);
+}
+
+function timelineEventBySlug(slug) {
+  return timelineEvents.find((item) => item.slug === slug || item.id === slug);
+}
+
+function timelineSourceById(id) {
+  return timelineSources.find((item) => item.id === id);
+}
+
+function timelineRegionTitle(id) {
+  return timelineText(timelineRegionById(id)?.title) || id;
+}
+
+function timelineCategoryTitle(id) {
+  return timelineText(timelineCategoryById(id)?.title) || id;
+}
+
+function timelineEntityTitle(id) {
+  return timelineText(timelineEntityById(id)?.names) || timelineText(timelineCountryById(id)?.names) || id;
+}
+
+function formatHistoricalYear(year) {
+  const value = Number(year);
+  if (!Number.isFinite(value)) return bilingualText("Không xác định", "Undated");
+  const absolute = Math.abs(value).toLocaleString(currentLanguage === "vi" ? "vi-VN" : "en-US");
+  if (value <= -100000) return currentLanguage === "vi" ? `khoảng ${absolute} năm trước` : `c. ${absolute} BP`;
+  if (value < 0) return currentLanguage === "vi" ? `${absolute} TCN` : `${absolute} BCE`;
+  return currentLanguage === "vi" ? `${absolute} CN` : `${absolute} CE`;
+}
+
+function formatExactTimelineDate(isoDate) {
+  const match = /^(\d{4,})-(\d{2})-(\d{2})$/.exec(String(isoDate || ""));
+  if (!match) return "";
+  const [, rawYear, rawMonth, rawDay] = match;
+  const month = Number(rawMonth);
+  const day = Number(rawDay);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return "";
+  const year = Number(rawYear).toLocaleString(currentLanguage === "vi" ? "vi-VN" : "en-US");
+  if (currentLanguage === "vi") return `${day} tháng ${month} năm ${year}`;
+  const englishMonths = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  return `${day} ${englishMonths[month - 1]} ${year}`;
+}
+
+function formatTimelineDate(item) {
+  const precise = item.datePrecision === "day" ? formatExactTimelineDate(item.startDate) : "";
+  if (precise) return precise;
+  const start = formatHistoricalYear(item.startYear);
+  const end = Number.isFinite(item.endYear) ? formatHistoricalYear(item.endYear) : "";
+  if (end && end !== start) return `${start} — ${end}`;
+  if (item.datePrecision === "approximate") return currentLanguage === "vi" ? `Khoảng ${start.replace(/^khoảng\s*/i, "")}` : `c. ${start.replace(/^c\.\s*/i, "")}`;
+  return start;
+}
+
+function timelinePrecisionLabel(item) {
+  const labels = {
+    day: ["ngày đã xác định", "dated day"],
+    year: ["năm đã xác định", "known year"],
+    range: ["khoảng thời gian", "date range"],
+    approximate: ["niên đại xấp xỉ", "approximate date"],
+    period: ["niên đại theo thời kỳ", "period dating"],
+  };
+  const [vi, en] = labels[item.datePrecision] || ["niên đại cần kiểm tra", "date needs review"];
+  return bilingualText(vi, en);
+}
+
+function timelineConfidenceLabel(item) {
+  const labels = {
+    high: ["có nguồn trực tiếp", "directly sourced"],
+    medium: ["có mức độ bất định", "some uncertainty"],
+    disputed: ["còn tranh luận", "disputed"],
+  };
+  const [vi, en] = labels[item.dateConfidence] || labels.medium;
+  return bilingualText(vi, en);
+}
+
+function timelineEventSearchText(item) {
+  const entityText = (item.historicalEntities || []).map(timelineEntityTitle);
+  const countryText = (item.modernGeographicalAssociations || []).map(timelineEntityTitle);
+  const categoryText = (item.eventCategories || []).map(timelineCategoryTitle);
+  return [
+    timelineText(item.title), item.title?.vi, item.title?.en, item.originalTitle,
+    timelineText(item.summary), item.summary?.vi, item.summary?.en,
+    ...(item.aliases || []),
+    ...entityText, ...countryText, ...categoryText,
+    ...(item.locations || []), ...(item.people || []), ...(item.organizations || []),
+  ].filter(Boolean).join(" ");
+}
+
+function isTimelineUncertain(item) {
+  return ["range", "approximate", "period"].includes(item.datePrecision) || item.dateConfidence !== "high" || (item.scholarlyDisputes || []).length > 0;
+}
+
+function timelineRoute(filters = {}) {
+  const params = new URLSearchParams();
+  const defaults = { q: "", period: "all", region: "all", country: "all", entity: "all", category: "all", actor: "all", evidence: "all", approximate: "0", start: "", end: "", zoom: "period", page: "1", selected: "" };
+  Object.entries({ ...defaults, ...filters }).forEach(([key, rawValue]) => {
+    const value = String(rawValue ?? "");
+    if (!value || value === defaults[key]) return;
+    params.set(key, value);
+  });
+  return `timeline${params.size ? `?${params.toString()}` : ""}`;
+}
+
+function normalizeTimelineFilters(params, entityId = "") {
+  const valid = (items, value) => value === "all" || items.some((item) => item.id === value);
+  const raw = {
+    q: (params.get("q") || "").trim(),
+    period: params.get("period") || "all",
+    region: params.get("region") || "all",
+    country: params.get("country") || "all",
+    entity: entityId || params.get("entity") || "all",
+    category: params.get("category") || "all",
+    actor: params.get("actor") || "all",
+    evidence: params.get("evidence") || "all",
+    approximate: params.get("approximate") === "1" ? "1" : "0",
+    start: params.get("start") || "",
+    end: params.get("end") || "",
+    zoom: params.get("zoom") || "period",
+    page: Math.max(1, Number.parseInt(params.get("page") || "1", 10) || 1),
+    selected: params.get("selected") || "",
+  };
+  raw.period = valid(timelinePeriods, raw.period) ? raw.period : "all";
+  raw.region = valid(timelineRegions, raw.region) ? raw.region : "all";
+  raw.country = valid(timelineCountryDirectory, raw.country) ? raw.country : "all";
+  raw.entity = valid(timelineEntities, raw.entity) ? raw.entity : "all";
+  raw.category = valid(timelineCategories, raw.category) ? raw.category : "all";
+  raw.zoom = ["period", "century", "decade", "year"].includes(raw.zoom) ? raw.zoom : "period";
+  raw.evidence = ["all", "source-backed", "needs-review"].includes(raw.evidence) ? raw.evidence : "all";
+  raw.start = /^-?\d+$/.test(raw.start) ? raw.start : "";
+  raw.end = /^-?\d+$/.test(raw.end) ? raw.end : "";
+  return raw;
+}
+
+function filterTimelineEvents(filters) {
+  const query = filters.q.toLocaleLowerCase(currentLanguage);
+  const start = filters.start ? Number(filters.start) : null;
+  const end = filters.end ? Number(filters.end) : null;
+  return timelineEvents.filter((item) => {
+    const endsAt = Number.isFinite(item.endYear) ? item.endYear : item.startYear;
+    if (filters.period !== "all" && item.historicalPeriod !== filters.period) return false;
+    if (filters.region !== "all" && !(item.regions || []).includes(filters.region)) return false;
+    if (filters.country !== "all" && !(item.modernGeographicalAssociations || []).includes(filters.country)) return false;
+    if (filters.entity !== "all" && !(item.historicalEntities || []).includes(filters.entity)) return false;
+    if (filters.category !== "all" && !(item.eventCategories || []).includes(filters.category)) return false;
+    if (filters.actor !== "all" && ![...(item.people || []), ...(item.organizations || [])].includes(filters.actor)) return false;
+    if (filters.evidence === "source-backed" && item.verificationStatus !== "source-backed") return false;
+    if (filters.evidence === "needs-review" && item.verificationStatus === "source-backed") return false;
+    if (filters.approximate === "1" && !isTimelineUncertain(item)) return false;
+    if (start !== null && endsAt < start) return false;
+    if (end !== null && item.startYear > end) return false;
+    if (query && !timelineEventSearchText(item).toLocaleLowerCase(currentLanguage).includes(query)) return false;
+    return true;
+  }).sort((left, right) => left.startYear - right.startYear || left.slug.localeCompare(right.slug));
+}
+
+function timelineGroupLabel(item, zoom) {
+  if (zoom === "period") return timelineText(timelinePeriodById(item.historicalPeriod)?.title) || bilingualText("Chưa phân kỳ", "Unperiodized");
+  if (zoom === "year") return formatHistoricalYear(item.startYear);
+  const bce = item.startYear < 0;
+  const absolute = Math.abs(item.startYear);
+  const groupSize = zoom === "decade" ? 10 : 100;
+  const group = bce ? Math.ceil(absolute / groupSize) * groupSize : Math.floor(item.startYear / groupSize) * groupSize;
+  if (zoom === "decade") return bce ? `${group}–${Math.max(1, group - 9)} ${bilingualText("TCN", "BCE")}` : `${group}s ${bilingualText("CN", "CE")}`;
+  const century = bce ? Math.ceil(absolute / 100) : Math.floor((item.startYear - 1) / 100) + 1;
+  return bilingualText(`Thế kỷ ${century} ${bce ? "TCN" : "CN"}`, `${century}${bce ? "th century BCE" : "th century CE"}`);
+}
+
+function timelineActors() {
+  return [...new Set(timelineEvents.flatMap((item) => [...(item.people || []), ...(item.organizations || [])]))].sort((left, right) => left.localeCompare(right, currentLanguage));
+}
+
+function timelineStatusText(status) {
+  return {
+    researched: bilingualText("Đã nghiên cứu", "Researched"),
+    "partially-covered": bilingualText("Mới phủ một phần", "Partially covered"),
+    "sparse-documentation": bilingualText("Tư liệu thưa", "Sparse documentation"),
+    "not-yet-researched": bilingualText("Chưa nghiên cứu", "Not yet researched"),
+    "needs-review": bilingualText("Cần kiểm tra nguồn", "Needs source verification"),
+    "source-backed": bilingualText("Có nguồn", "Source-backed"),
+  }[status] || status;
+}
+
+function timelineEventCard(item, filters) {
+  const primaryEntity = item.historicalEntities?.[0] || item.modernGeographicalAssociations?.[0];
+  const dateNote = isTimelineUncertain(item) ? `<span class="civitas-timeline-date-note">${bilingualText("≈ / có tranh luận", "≈ / interpretive note")}</span>` : "";
+  return `
+    <article class="civitas-timeline-card">
+      <div class="civitas-timeline-card-date"><span>${escapeHtml(formatTimelineDate(item))}</span>${dateNote}</div>
+      <div class="civitas-timeline-card-body">
+        <div class="civitas-timeline-card-context">${primaryEntity ? `<a href="#timeline/entity/${encodeURIComponent(primaryEntity)}">${escapeHtml(timelineEntityTitle(primaryEntity))}</a>` : ""}${item.regions?.length ? `<span>${escapeHtml(item.regions.slice(0, 2).map(timelineRegionTitle).join(" · "))}</span>` : ""}</div>
+        <h3><a href="#timeline/event/${encodeURIComponent(item.slug)}">${escapeHtml(timelineText(item.title))}</a></h3>
+        <p>${escapeHtml(timelineText(item.summary))}</p>
+        <div class="civitas-timeline-tags">${(item.eventCategories || []).slice(0, 2).map((category) => `<span>${escapeHtml(timelineCategoryTitle(category))}</span>`).join("")}</div>
+      </div>
+      <button class="civitas-timeline-quick-view" type="button" data-route="${timelineRoute({ ...filters, selected: item.id, page: filters.page })}" aria-label="${bilingualText("Xem tóm tắt", "Preview event")}">↗</button>
+    </article>
+  `;
+}
+
+function timelineDetailPanel(item, total) {
+  if (!item) {
+    return `
+      <aside class="civitas-timeline-detail civitas-timeline-detail-empty">
+        <span class="civitas-detail-mark">${icon("clock", 20)}</span>
+        <p class="civitas-eyebrow">${bilingualText("CÁCH ĐỌC", "HOW TO READ")}</p>
+        <h2>${bilingualText("Đi chậm qua các mốc.", "Move slowly through the record.")}</h2>
+        <p>${bilingualText(`Hiện có ${total} mốc phù hợp. Chọn biểu tượng ↗ để xem nhanh, hoặc mở một mốc để đọc hồ sơ và nguồn.`, `${total} records match. Use ↗ for a quick view, or open an event for its record and sources.`)}</p>
+      </aside>
+    `;
+  }
+  const entities = [...(item.historicalEntities || []), ...(item.modernGeographicalAssociations || [])].slice(0, 5);
+  return `
+    <aside class="civitas-timeline-detail">
+      <p class="civitas-eyebrow">${escapeHtml(formatTimelineDate(item))}</p>
+      <h2>${escapeHtml(timelineText(item.title))}</h2>
+      <p>${escapeHtml(timelineText(item.summary))}</p>
+      <div class="civitas-timeline-detail-meta"><span>${escapeHtml(timelineConfidenceLabel(item))}</span><span>${item.sourceReferences.length} ${bilingualText("nguồn", "sources")}</span></div>
+      ${entities.length ? `<div class="civitas-timeline-detail-links">${entities.map((id) => `<a href="#timeline/entity/${encodeURIComponent(id)}">${escapeHtml(timelineEntityTitle(id))} <span>→</span></a>`).join("")}</div>` : ""}
+      <a class="civitas-button forest" href="#timeline/event/${encodeURIComponent(item.slug)}">${bilingualText("Mở hồ sơ sự kiện", "Open event record")} <span>→</span></a>
+    </aside>
+  `;
+}
+
+function renderTimeline(params, context = {}) {
+  const filters = normalizeTimelineFilters(params, context.entityId || "");
+  const visible = filterTimelineEvents(filters);
+  const pageSize = 12;
+  const pageCount = Math.max(1, Math.ceil(visible.length / pageSize));
+  const page = Math.min(filters.page, pageCount);
+  const pageItems = visible.slice((page - 1) * pageSize, page * pageSize);
+  const selected = visible.find((item) => item.id === filters.selected) || null;
+  const grouped = pageItems.reduce((groups, item) => {
+    const key = timelineGroupLabel(item, filters.zoom);
+    (groups.get(key) || groups.set(key, []).get(key)).push(item);
+    return groups;
+  }, new Map());
+  const contextEntity = context.entityId ? timelineEntityById(context.entityId) : null;
+  const title = contextEntity
+    ? timelineEntityTitle(contextEntity.id)
+    : bilingualText("Lịch sử của thế giới, qua từng thời đại.", "The history of the world, through its many eras.");
+  const lede = contextEntity
+    ? timelineText(contextEntity.overview)
+    : bilingualText("Khám phá các nền văn minh, quốc gia, sự kiện và bước ngoặt đã định hình thế giới — từ những xã hội đầu tiên đến hiện tại.", "Explore civilizations, countries, events, and turning points that shaped the world—from early societies to the present.");
+  const actors = timelineActors();
+  const currentFilters = { ...filters, page };
 
   return `
-    ${pageHero("Lịch sử &amp; bối cảnh", "Dòng thời gian", "Lọc các sự kiện mẫu theo khu vực và chủ đề. Từng điểm trên dòng thời gian dẫn về bối cảnh, nguồn hoặc mục liên quan thay vì chỉ gợi ý quan hệ nhân quả từ thứ tự thời gian.")}
-    <section class="page-width timeline-page">
-      <form class="timeline-filters" data-timeline-filter>
-        <label><span class="control-label">Khu vực</span><select name="region"><option value="all">Mọi khu vực</option>${regions.map((item) => `<option value="${escapeHtml(item)}" ${region === item ? "selected" : ""}>${escapeHtml(item)}</option>`).join("")}</select></label>
-        <label><span class="control-label">Chủ đề</span><select name="tag"><option value="all">Mọi chủ đề</option>${tags.map((item) => `<option value="${escapeHtml(item)}" ${tag === item ? "selected" : ""}>${escapeHtml(item)}</option>`).join("")}</select></label>
-        <div><span class="control-label">Kết quả</span><div class="filter-select" style="display:flex;align-items:center">${visible.length} sự kiện</div></div>
-      </form>
-      <div class="timeline-list timeline-page-list">
-        ${visible.length ? visible.map((event) => `
-          <article class="timeline-item">
-            <div class="timeline-year">${escapeHtml(event.year)}</div>
-            <div class="timeline-content">
-              <h3>${escapeHtml(event.title)}</h3>
-              <p>${escapeHtml(event.summary)}</p>
-              <div class="event-tags">${(event.tags || []).map((tagItem) => `<span>${escapeHtml(tagItem)}</span>`).join("")}</div>
-            </div>
-            <div class="event-region">${escapeHtml(event.region || "Bối cảnh toàn cầu")}</div>
-          </article>
-        `).join("") : emptyState("Không có sự kiện phù hợp", "Thử bỏ bớt bộ lọc để xem thêm mốc thời gian.")}
+    <section class="civitas-timeline-hero">
+      <div class="page-width">
+        <nav class="civitas-breadcrumb" aria-label="Breadcrumb"><a href="#home">Civitas</a><span>/</span><a href="#timeline">${bilingualText("Timeline lịch sử", "History timeline")}</a>${contextEntity ? `<span>/</span><span>${escapeHtml(timelineEntityTitle(contextEntity.id))}</span>` : ""}</nav>
+        <p class="civitas-eyebrow">${contextEntity ? escapeHtml(timelineText(contextEntity.type).replaceAll("-", " ")) : "GLOBAL HISTORY ARCHIVE"}</p>
+        <h1>${escapeHtml(title)}</h1>
+        <p>${escapeHtml(lede)}</p>
+        <form class="civitas-timeline-search" data-timeline-search>
+          ${icon("search", 20)}<input name="q" value="${escapeHtml(filters.q)}" autocomplete="off" placeholder="${bilingualText("Tìm sự kiện, quốc gia, triều đại, nhân vật...", "Search events, countries, dynasties, people...")}" />
+          <button type="submit">${bilingualText("Tìm trong timeline", "Search timeline")}</button>
+        </form>
+        <div class="civitas-timeline-archive-note"><span>${timelineEvents.length} ${bilingualText("hồ sơ lưu trữ", "archive records")}</span><span>${timelineCoverage.importSummary?.sourceBackedRecordCount || timelineEvents.filter((item) => item.verificationStatus === "source-backed").length} ${bilingualText("có nguồn trực tiếp", "source-backed")}</span><span>${bilingualText("kiểm tra lần cuối", "last verified")} ${TIMELINE_LAST_VERIFIED_AT}</span><a href="#timeline/coverage">${bilingualText("Xem phạm vi & khoảng trống", "View scope & gaps")} →</a></div>
+      </div>
+    </section>
+
+    <section class="page-width civitas-timeline-overview" aria-label="${bilingualText("Tổng quan thời gian", "Timeline overview")}">
+      <div class="civitas-timeline-overview-top"><div><p class="civitas-eyebrow">${bilingualText("TỔNG QUAN", "OVERVIEW")}</p><h2>${bilingualText("Dải tư liệu hiện có", "The available record")}</h2></div><a href="#timeline" class="civitas-reset-link">${bilingualText("Xóa bộ lọc", "Clear filters")} ↺</a></div>
+      <div class="civitas-period-rail">${timelinePeriods.map((period) => {
+        const count = visible.filter((item) => item.historicalPeriod === period.id).length;
+        return `<a href="#${timelineRoute({ ...currentFilters, period: filters.period === period.id ? "all" : period.id, page: 1 })}" class="${filters.period === period.id ? "is-active" : ""}" style="--period-grow:${Math.max(1, Math.log2(count + 1)).toFixed(2)}"><span>${escapeHtml(timelineText(period.title))}</span><small>${count}</small></a>`;
+      }).join("")}</div>
+      <div class="civitas-timeline-scale-controls"><span>${bilingualText("Mức phóng đại", "Scale")}</span>${[["period", bilingualText("Thời kỳ", "Periods")], ["century", bilingualText("Thế kỷ", "Centuries")], ["decade", bilingualText("Thập kỷ", "Decades")], ["year", bilingualText("Năm", "Years")]].map(([zoom, label]) => `<a href="#${timelineRoute({ ...currentFilters, zoom, page: 1 })}" class="${filters.zoom === zoom ? "is-active" : ""}">${label}</a>`).join("")}</div>
+    </section>
+
+    <section class="page-width civitas-timeline-layout">
+      <aside class="civitas-timeline-filters">
+        <form data-timeline-filter>
+          <div class="civitas-filter-title"><p class="civitas-eyebrow">${bilingualText("BỘ LỌC", "FILTERS")}</p><a href="#timeline">${bilingualText("Đặt lại", "Reset")}</a></div>
+          <label><span>${bilingualText("Thời kỳ", "Period")}</span><select name="period"><option value="all">${bilingualText("Tất cả thời kỳ", "All periods")}</option>${timelinePeriods.map((item) => `<option value="${item.id}" ${filters.period === item.id ? "selected" : ""}>${escapeHtml(timelineText(item.title))}</option>`).join("")}</select></label>
+          <div class="civitas-filter-date-grid"><label><span>${bilingualText("Từ năm", "From year")}</span><input name="start" type="number" value="${escapeHtml(filters.start)}" placeholder="-3000" /></label><label><span>${bilingualText("Đến năm", "To year")}</span><input name="end" type="number" value="${escapeHtml(filters.end)}" placeholder="2025" /></label></div>
+          <label><span>${bilingualText("Khu vực", "Region")}</span><select name="region"><option value="all">${bilingualText("Mọi khu vực", "All regions")}</option>${timelineRegions.map((item) => `<option value="${item.id}" ${filters.region === item.id ? "selected" : ""}>${escapeHtml(timelineText(item.title))}</option>`).join("")}</select></label>
+          <label><span>${bilingualText("Quốc gia / lãnh thổ hiện nay", "Current country / territory")}</span><select name="country"><option value="all">${bilingualText("Tất cả", "All")}</option>${timelineCountryDirectory.map((item) => `<option value="${item.id}" ${filters.country === item.id ? "selected" : ""}>${escapeHtml(timelineText(item.names))}</option>`).join("")}</select></label>
+          <label><span>${bilingualText("Thực thể lịch sử", "Historical entity")}</span><select name="entity"><option value="all">${bilingualText("Tất cả", "All")}</option>${timelineEntities.map((item) => `<option value="${item.id}" ${filters.entity === item.id ? "selected" : ""}>${escapeHtml(timelineEntityTitle(item.id))}</option>`).join("")}</select></label>
+          <label><span>${bilingualText("Loại sự kiện", "Event category")}</span><select name="category"><option value="all">${bilingualText("Mọi loại", "All categories")}</option>${timelineCategories.map((item) => `<option value="${item.id}" ${filters.category === item.id ? "selected" : ""}>${escapeHtml(timelineText(item.title))}</option>`).join("")}</select></label>
+          <label><span>${bilingualText("Người / tổ chức", "Person / organization")}</span><select name="actor"><option value="all">${bilingualText("Tất cả", "All")}</option>${actors.map((item) => `<option value="${escapeHtml(item)}" ${filters.actor === item ? "selected" : ""}>${escapeHtml(item)}</option>`).join("")}</select></label>
+          <label><span>${bilingualText("Trạng thái nguồn", "Evidence status")}</span><select name="evidence"><option value="all">${bilingualText("Mọi trạng thái", "All statuses")}</option><option value="source-backed" ${filters.evidence === "source-backed" ? "selected" : ""}>${bilingualText("Có nguồn trực tiếp", "Source-backed")}</option><option value="needs-review" ${filters.evidence === "needs-review" ? "selected" : ""}>${bilingualText("Cần kiểm tra thêm", "Needs review")}</option></select></label>
+          <label class="civitas-check-filter"><input name="approximate" type="checkbox" value="1" ${filters.approximate === "1" ? "checked" : ""}/><span>${bilingualText("Chỉ mốc xấp xỉ / còn tranh luận", "Only approximate / disputed dates")}</span></label>
+          <input type="hidden" name="q" value="${escapeHtml(filters.q)}" /><input type="hidden" name="zoom" value="${escapeHtml(filters.zoom)}" />
+        </form>
+      </aside>
+
+      <div class="civitas-timeline-stream">
+        <div class="civitas-timeline-stream-top"><span>${visible.length} ${bilingualText("mốc phù hợp", "matching records")}</span><span>${bilingualText("trang", "page")} ${page}/${pageCount}</span></div>
+        ${pageItems.length ? [...grouped.entries()].map(([group, items]) => `<section class="civitas-timeline-group"><h2>${escapeHtml(group)}</h2>${items.map((item) => timelineEventCard(item, currentFilters)).join("")}</section>`).join("") : `<div class="civitas-timeline-empty"><span>${icon("search", 22)}</span><h2>${bilingualText("Chưa có mốc nào khớp bộ lọc.", "No records match these filters.")}</h2><p>${bilingualText("Kho tư liệu này vẫn có các khoảng trống nghiên cứu. Hãy thử bỏ bớt điều kiện hoặc xem bảng phạm vi nghiên cứu.", "This archive still has research gaps. Try fewer filters or view the coverage audit.")}</p><a href="#timeline">${bilingualText("Xóa bộ lọc", "Clear filters")}</a></div>`}
+        ${pageCount > 1 ? `<nav class="civitas-timeline-pagination" aria-label="${bilingualText("Phân trang timeline", "Timeline pagination")}"><a class="${page === 1 ? "is-disabled" : ""}" href="#${timelineRoute({ ...currentFilters, page: Math.max(1, page - 1) })}">← ${bilingualText("Sớm hơn", "Earlier")}</a><span>${page} / ${pageCount}</span><a class="${page === pageCount ? "is-disabled" : ""}" href="#${timelineRoute({ ...currentFilters, page: Math.min(pageCount, page + 1) })}">${bilingualText("Muộn hơn", "Later")} →</a></nav>` : ""}
+      </div>
+      ${timelineDetailPanel(selected, visible.length)}
+    </section>
+  `;
+}
+
+function timelineEventSources(item) {
+  return item.sourceReferences.map(timelineSourceById).filter(Boolean).map((source) => `
+    <a class="civitas-event-source" href="${escapeHtml(source.url)}" target="_blank" rel="noreferrer">
+      <span>${escapeHtml(source.sourceType || bilingualText("Nguồn", "Source"))}</span><strong>${escapeHtml(source.title)}</strong><small>${escapeHtml(source.institution)} · ${bilingualText("đã kiểm tra", "accessed")} ${escapeHtml(source.accessedAt || "")}</small><i>↗</i>
+    </a>
+  `).join("");
+}
+
+function timelineEventNarrative(item, key, titleVi, titleEn, fallbackVi, fallbackEn) {
+  const copy = timelineText(item[key]) || bilingualText(fallbackVi, fallbackEn);
+  return `<section><h2>${bilingualText(titleVi, titleEn)}</h2><p>${escapeHtml(copy)}</p></section>`;
+}
+
+function renderTimelineEvent(slug) {
+  const item = timelineEventBySlug(slug);
+  if (!item) return renderNotFound();
+  const period = timelinePeriodById(item.historicalPeriod);
+  const relatedIds = [...new Set([...(item.relatedEvents || []), ...timelineEvents.filter((candidate) => candidate.id !== item.id && candidate.historicalPeriod === item.historicalPeriod).slice(0, 2).map((candidate) => candidate.id)])];
+  const related = relatedIds.map((id) => timelineEvents.find((candidate) => candidate.id === id)).filter(Boolean).slice(0, 4);
+  const entityIds = [...new Set([...(item.historicalEntities || []), ...(item.modernGeographicalAssociations || [])])];
+  const hasClaimsNote = item.verificationStatus !== "source-backed" || isTimelineUncertain(item);
+
+  return `
+    <section class="civitas-event-hero"><div class="page-width"><nav class="civitas-breadcrumb" aria-label="Breadcrumb"><a href="#home">Civitas</a><span>/</span><a href="#timeline">${bilingualText("Timeline lịch sử", "History timeline")}</a><span>/</span><span>${escapeHtml(formatTimelineDate(item))}</span></nav><p class="civitas-eyebrow">${escapeHtml(timelineText(period?.title))}</p><p class="civitas-event-date">${escapeHtml(formatTimelineDate(item))}</p><h1>${escapeHtml(timelineText(item.title))}</h1><p>${escapeHtml(timelineText(item.summary))}</p><div class="civitas-event-hero-meta"><span>${escapeHtml(timelinePrecisionLabel(item))}</span><span>${escapeHtml(timelineConfidenceLabel(item))}</span><span class="civitas-verification-status ${escapeHtml(item.verificationStatus)}">${escapeHtml(timelineStatusText(item.verificationStatus))}</span><span>${item.sourceReferences.length} ${bilingualText("nguồn", "sources")}</span></div></div></section>
+    <section class="page-width civitas-event-layout">
+      <aside class="civitas-event-rail"><a href="#timeline?period=${encodeURIComponent(item.historicalPeriod)}">${escapeHtml(timelineText(period?.title))} →</a>${entityIds.map((id) => `<a href="#timeline/entity/${encodeURIComponent(id)}">${escapeHtml(timelineEntityTitle(id))} →</a>`).join("")}</aside>
+      <article class="civitas-event-record">
+        <section class="civitas-event-facts"><div><span>${bilingualText("Bối cảnh địa lý", "Geographical context")}</span><p>${escapeHtml((item.regions || []).map(timelineRegionTitle).join(" · ") || bilingualText("Không xác định", "Not specified"))}</p></div><div><span>${bilingualText("Địa điểm", "Location")}</span><p>${escapeHtml((item.locations || []).join(" · ") || bilingualText("Không gán một địa điểm duy nhất", "Not assigned to one location"))}</p></div><div><span>${bilingualText("Thực thể lịch sử", "Historical entity")}</span><p>${escapeHtml((item.historicalEntities || []).map(timelineEntityTitle).join(" · ") || bilingualText("Không áp dụng", "Not applicable"))}</p></div></section>
+        ${timelineEventNarrative(item, "background", "Bối cảnh", "Historical context", "Hồ sơ khởi đầu này chỉ nêu những bối cảnh được nguồn gắn trực tiếp; các chi tiết chưa có nguồn chuyên ngành sẽ không được suy diễn thêm.", "This starter record only states context attached directly to its sources; details without specialist support are not inferred.")}
+        ${timelineEventNarrative(item, "causes", "Nguyên nhân & nền tảng", "Causes & background", "Các nguyên nhân lịch sử thường có nhiều tầng và có thể được các học giả diễn giải khác nhau. Hãy xem nguồn để phân biệt bằng chứng với cách diễn giải.", "Historical causes often have several layers and may be interpreted differently by scholars. Consult the sources to distinguish evidence from interpretation.")}
+        ${timelineEventNarrative(item, "developments", "Diễn biến", "What happened", "Phần tóm tắt ở đầu hồ sơ ghi lại phạm vi đã được xác minh của mốc này; hồ sơ sẽ được mở rộng khi có nghiên cứu và nguồn phù hợp.", "The summary at the top records the verified scope of this entry; this record can expand when appropriate research and sources are added.")}
+        ${timelineEventNarrative(item, "consequences", "Hệ quả", "Consequences", "Tác động dài hạn không được giản lược thành một đường nguyên nhân duy nhất. Các liên hệ dưới đây là đường dẫn nghiên cứu, không phải khẳng định tất định.", "Long-term effects are not reduced to a single causal line. The links below are research paths, not deterministic claims.")}
+        ${(item.people?.length || item.organizations?.length) ? `<section><h2>${bilingualText("Nhân vật & tổ chức", "People & organizations")}</h2><div class="civitas-entity-chips">${[...(item.people || []), ...(item.organizations || [])].map((name) => `<span>${escapeHtml(name)}</span>`).join("")}</div></section>` : ""}
+        ${hasClaimsNote ? `<aside class="civitas-event-caution"><span>≈</span><div><strong>${bilingualText("Ghi chú về mức độ chắc chắn", "Note on certainty")}</strong><p>${escapeHtml((item.scholarlyDisputes || []).join(" ") || bilingualText("Niên đại hoặc cách diễn giải của hồ sơ này có giới hạn. Civitas ghi rõ giới hạn thay vì làm chúng có vẻ chính xác hơn thực tế.", "This record has limits of date or interpretation. Civitas names those limits rather than making them look more precise than they are."))}</p></div></aside>` : ""}
+        <section class="civitas-event-sources"><div><p class="civitas-eyebrow">${bilingualText("NGUỒN & KIỂM CHỨNG", "SOURCES & VERIFICATION")}</p><h2>${bilingualText("Nguồn có thể mở", "Usable sources")}</h2><p>${bilingualText(`Kiểm tra lần cuối: ${item.lastVerifiedAt}. Nguồn được gắn như bằng chứng hoặc đường dẫn nghiên cứu; nhãn trạng thái cho biết tuyên bố trung tâm đã được đối chiếu ở cấp hồ sơ hay chưa.`, `Last verified: ${item.lastVerifiedAt}. Sources are linked as evidence or research pathways; the status label says whether the central claim has been checked record by record.`)}</p></div>${timelineEventSources(item)}</section>
+      </article>
+      <aside class="civitas-event-related"><p class="civitas-eyebrow">${bilingualText("ĐỌC TIẾP", "CONTINUE READING")}</p>${related.map((relatedItem) => `<a href="#timeline/event/${encodeURIComponent(relatedItem.slug)}"><span>${escapeHtml(formatTimelineDate(relatedItem))}</span><strong>${escapeHtml(timelineText(relatedItem.title))}</strong><i>→</i></a>`).join("") || `<p>${bilingualText("Chưa có liên kết sự kiện khác trong bộ khởi đầu.", "No other event links in the starter set yet.")}</p>`}</aside>
+    </section>
+  `;
+}
+
+function renderTimelineEntity(entityId) {
+  const entity = timelineEntityById(entityId);
+  if (!entity) return renderNotFound();
+  return renderTimeline(new URLSearchParams(`entity=${encodeURIComponent(entity.id)}`), { entityId: entity.id });
+}
+
+function renderTimelineCoverage() {
+  const statusForPeriod = (id) => timelineCoverage.periodStatus?.find((item) => item.periodId === id)?.status || "not-yet-researched";
+  const statusForRegion = (id) => timelineCoverage.regionalStatus?.find((item) => item.regionId === id)?.status || "not-yet-researched";
+  const importSummary = timelineCoverage.importSummary || {};
+  return `
+    <section class="civitas-coverage-hero"><div class="page-width"><nav class="civitas-breadcrumb" aria-label="Breadcrumb"><a href="#home">Civitas</a><span>/</span><a href="#timeline">${bilingualText("Timeline lịch sử", "History timeline")}</a><span>/</span><span>${bilingualText("Phạm vi", "Coverage")}</span></nav><p class="civitas-eyebrow">EDITORIAL COVERAGE AUDIT</p><h1>${bilingualText("Nhìn thấy cả những khoảng trống.", "Make the gaps visible, too.")}</h1><p>${escapeHtml(timelineText(timelineCoverage.datasetScope))}</p><div><span>${timelineEvents.length} ${bilingualText("hồ sơ", "records")}</span><span>${importSummary.sourceBackedRecordCount || 0} ${bilingualText("có nguồn trực tiếp", "source-backed")}</span><span>${importSummary.importedRecordCount || 0} ${bilingualText("mốc từ batch nghiên cứu", "research-batch records")}</span><span>${timelineEntities.length} ${bilingualText("thực thể", "entities")}</span><span>${timelineCountryDirectory.length} ${bilingualText("quốc gia / lãnh thổ trong danh mục", "countries / territories in directory")}</span><span>${bilingualText("kiểm tra", "verified")} ${TIMELINE_LAST_VERIFIED_AT}</span></div></div></section>
+    <section class="page-width civitas-coverage-page"><p class="civitas-coverage-note">${escapeHtml(timelineText(timelineCoverage.notes))}</p><div class="civitas-coverage-grid"><section><h2>${bilingualText("Theo thời kỳ", "By period")}</h2>${timelinePeriods.map((item) => `<a href="#timeline?period=${encodeURIComponent(item.id)}"><span>${escapeHtml(timelineText(item.title))}</span><b class="coverage-status ${statusForPeriod(item.id)}">${escapeHtml(timelineStatusText(statusForPeriod(item.id)))}</b><i>→</i></a>`).join("")}</section><section><h2>${bilingualText("Theo khu vực", "By region")}</h2>${timelineRegions.map((item) => `<a href="#timeline?region=${encodeURIComponent(item.id)}"><span>${escapeHtml(timelineText(item.title))}</span><b class="coverage-status ${statusForRegion(item.id)}">${escapeHtml(timelineStatusText(statusForRegion(item.id)))}</b><i>→</i></a>`).join("")}</section></div><section class="civitas-country-directory"><div><p class="civitas-eyebrow">${bilingualText("DANH MỤC LÃNH THỔ", "COUNTRY & TERRITORY DIRECTORY")}</p><h2>${bilingualText("Trạng thái trong kho tư liệu hiện tại", "Status in the current archive")}</h2></div><div class="civitas-country-directory-grid">${timelineCountryDirectory.map((item) => `<a href="#timeline?country=${encodeURIComponent(item.id)}"><span>${escapeHtml(timelineText(item.names))}</span><small>${escapeHtml(timelineRegionTitle(item.region))}</small><b class="coverage-status ${item.coverageStatus}">${escapeHtml(timelineStatusText(item.coverageStatus))}</b></a>`).join("")}</div></section></section>
+  `;
+}
+
+function learningProfileLabel(profile) {
+  return currentLanguage === "en" ? (profile?.labelEn || profile?.label || "") : (profile?.label || "");
+}
+
+function learningProfileDescription(profile) {
+  return currentLanguage === "en" ? (profile?.descriptionEn || profile?.description || "") : (profile?.description || "");
+}
+
+function learningCheckPrompt(check) {
+  return currentLanguage === "en" ? (check?.promptEn || check?.prompt || "") : (check?.prompt || "");
+}
+
+function learningCheckChoices(check) {
+  return currentLanguage === "en" ? (check?.choicesEn || check?.choices || []) : (check?.choices || []);
+}
+
+function learningCheckExplanation(check) {
+  return currentLanguage === "en" ? (check?.explanationEn || check?.explanation || "") : (check?.explanation || "");
+}
+
+function setLearningPath(pathId) {
+  if (!learningPaths.some((path) => path.id === pathId)) return false;
+  learningProgress.profile.activePathId = pathId;
+  return saveLearningProgress();
+}
+
+function recordLearningCheck(checkId, selectedIndex) {
+  const check = learningCheck.find((item) => item.id === checkId);
+  if (!check || !Number.isInteger(selectedIndex) || selectedIndex < 0 || selectedIndex >= (check.choices || []).length) return false;
+  const previous = learningProgress.checks[checkId] || { attempts: 0 };
+  learningProgress.checks[checkId] = {
+    attempts: Math.max(0, Number(previous.attempts) || 0) + 1,
+    selectedIndex,
+    correct: selectedIndex === check.answer,
+    attemptedAt: new Date().toISOString(),
+  };
+  return saveLearningProgress();
+}
+
+function learningRecommendationReason(node, path) {
+  const status = learningStatus(node.id);
+  const missing = missingPrerequisites(node);
+  if (status === "review") return bilingualText("Bạn đã đánh dấu mục này cần ôn lại.", "You marked this entry for review.");
+  if (status === "learning") return bilingualText("Bạn đang học mục này.", "You are currently studying this entry.");
+  if (!learningPrerequisites(node).length) return bilingualText("Đây là một điểm vào phù hợp cho nhánh này.", "This is a suitable entry point for this branch.");
+  if (missing.length) {
+    return bilingualText(
+      "Bạn vẫn có thể mở bài ngay; nên xem trước " + missing.map(learningNodeTitle).join(", ") + ".",
+      "You can open this article now; consider reviewing " + missing.map(learningNodeTitle).join(", ") + " first.",
+    );
+  }
+  return bilingualText(
+    "Các nền tảng gợi ý cho " + learningPathTitle(path).toLowerCase() + " đã được đánh dấu.",
+    "The suggested foundations for " + learningPathTitle(path).toLowerCase() + " are marked.",
+  );
+}
+
+function learningMapPoint(nodeId) {
+  const points = {
+    "what-is-politics": [95, 360],
+    "political-power": [265, 190],
+    democracy: [335, 420],
+    sovereignty: [145, 565],
+    "political-legitimacy": [525, 485],
+    constitutionalism: [500, 620],
+    "separation-of-powers": [770, 610],
+    "proportional-representation": [570, 230],
+    authoritarianism: [795, 345],
+    liberalism: [850, 130],
+    "united-nations": [760, 485],
+    "vietnam-constitutional-framework": [965, 620],
+    "public-policy": [710, 260],
+  };
+  const [x, y] = points[nodeId] || [520, 340];
+  return { x, y };
+}
+
+function renderLearningMap(pathId, selectedNodeId) {
+  const visibleNodeIds = pathNodeIdsWithPrerequisites(pathId);
+  const mapTransform = `translate(${state.learningMap.x}px, ${state.learningMap.y}px) scale(${state.learningMap.scale})`;
+  const edges = learningNodes.flatMap((node) => learningPrerequisites(node).map((prerequisite) => {
+    const start = learningMapPoint(prerequisite.id);
+    const end = learningMapPoint(node.id);
+    const visible = visibleNodeIds.has(prerequisite.id) && visibleNodeIds.has(node.id);
+    return `<line class="learning-map-edge ${visible ? "is-visible" : "is-muted"}" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}"></line>`;
+  })).join("");
+
+  return `
+    <section class="learning-map-panel" aria-labelledby="learning-map-title">
+      <div class="learning-map-toolbar">
+        <div>
+          <p class="section-kicker">${bilingualText("Bản đồ tương tác", "Interactive map")}</p>
+          <h2 id="learning-map-title">${bilingualText("Khám phá các nền tảng được gợi ý", "Explore suggested foundations")}</h2>
+        </div>
+        <div class="learning-map-controls" role="group" aria-label="${bilingualText("Điều khiển bản đồ", "Map controls")}">
+          <button type="button" data-action="learning-zoom" data-delta="-0.15" aria-label="${bilingualText("Thu nhỏ bản đồ", "Zoom out")}">−</button>
+          <button type="button" data-action="learning-map-reset">${bilingualText("Căn giữa", "Reset")}</button>
+          <button type="button" data-action="learning-zoom" data-delta="0.15" aria-label="${bilingualText("Phóng to bản đồ", "Zoom in")}">+</button>
+        </div>
+      </div>
+      <p class="learning-map-hint">${bilingualText("Kéo vùng trống để di chuyển. Dùng + / − để phóng to hoặc thu nhỏ. Chọn một nút để xem chi tiết.", "Drag empty space to move. Use + / − to zoom. Select a node to see details.")}</p>
+      <div class="learning-map-viewport" data-learning-map-viewport tabindex="0" aria-label="${bilingualText("Bản đồ kiến thức học tập", "Learning knowledge map")}">
+        <div class="learning-map-canvas" data-learning-map-canvas style="transform:${escapeHtml(mapTransform)}">
+          <svg class="learning-map-edges" viewBox="0 0 1040 680" aria-hidden="true">${edges}</svg>
+          ${learningNodes.map((node) => {
+            const point = learningMapPoint(node.id);
+            const status = learningStatus(node.id);
+            const isSelected = node.id === selectedNodeId;
+            const isIncluded = visibleNodeIds.has(node.id);
+            return `
+              <button
+                class="learning-map-node status-${escapeHtml(status)} ${isSelected ? "is-selected" : ""} ${isIncluded ? "is-included" : "is-muted"}"
+                type="button"
+                data-learning-node="${escapeHtml(node.id)}"
+                aria-pressed="${isSelected}"
+                aria-label="${escapeHtml(learningNodeTitle(node) + " · " + learningStatusLabel(status))}"
+                style="--node-x:${point.x}px;--node-y:${point.y}px"
+              >
+                <span class="learning-map-node-status" aria-hidden="true">${learningStatusSymbol(status)}</span>
+                <span class="learning-map-node-title">${escapeHtml(learningNodeTitle(node))}</span>
+                <span class="learning-map-node-meta">${escapeHtml(learningTrackMeta(node.track))}</span>
+              </button>
+            `;
+          }).join("")}
+        </div>
+      </div>
+      <div class="learning-map-legend" aria-label="${bilingualText("Chú giải trạng thái", "Status legend")}">
+        ${["not_started", "learning", "mastered", "review"].map((status) => `<span class="status-${status}"><i aria-hidden="true">${learningStatusSymbol(status)}</i>${learningStatusLabel(status)}</span>`).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderLearningStatusControls(node, compact = false) {
+  const status = learningStatus(node.id);
+  const statuses = ["read", "learning", "mastered", "review"];
+  return `
+    <div class="learning-status-actions ${compact ? "is-compact" : ""}" role="group" aria-label="${bilingualText("Cập nhật tiến độ", "Update learning progress")}">
+      ${statuses.map((value) => `
+        <button class="${status === value ? "active" : ""}" type="button" data-learning-status="${value}" data-learning-node-id="${escapeHtml(node.id)}" aria-pressed="${status === value}">
+          <span aria-hidden="true">${learningStatusSymbol(value)}</span>${learningStatusLabel(value)}
+        </button>
+      `).join("")}
+      ${status !== "not_started" ? `<button class="learning-status-clear" type="button" data-learning-status="not_started" data-learning-node-id="${escapeHtml(node.id)}">${bilingualText("Bỏ đánh dấu", "Clear")}</button>` : ""}
+    </div>
+  `;
+}
+
+function renderLearningCheck(node) {
+  const check = learningCheck.find((item) => item.nodeId === node.id);
+  if (!check) {
+    return `<p class="learning-check-empty">${bilingualText("Mục này chưa có câu hỏi ôn tập trong dữ liệu demo. Bạn vẫn có thể tự đổi trạng thái học.", "This entry has no review question in the demo data yet. You can still set your own learning status.")}</p>`;
+  }
+
+  const previous = learningProgress.checks[check.id];
+  const choices = learningCheckChoices(check);
+  const result = previous?.attemptedAt ? `
+    <div class="learning-check-result ${previous.correct ? "is-correct" : "is-incorrect"}" role="status">
+      <strong>${previous.correct ? bilingualText("Đúng hướng.", "On the right track.") : bilingualText("Chưa đúng; hãy xem lại lời giải.", "Not quite; review the explanation.")}</strong>
+      <span>${escapeHtml(learningCheckExplanation(check))}</span>
+      <small>${bilingualText("Kết quả này không tự động đánh dấu “đã nắm vững”.", "This result does not automatically mark the entry as mastered.")}</small>
+    </div>
+  ` : "";
+
+  return `
+    <form class="learning-check" data-learning-check data-check-id="${escapeHtml(check.id)}">
+      <fieldset>
+        <legend>${escapeHtml(learningCheckPrompt(check))}</legend>
+        <div class="learning-check-options">
+          ${choices.map((choice, index) => `
+            <label>
+              <input type="radio" name="answer" value="${index}" ${previous?.selectedIndex === index ? "checked" : ""} required />
+              <span>${escapeHtml(choice)}</span>
+            </label>
+          `).join("")}
+        </div>
+        <button class="button-primary" type="submit">${previous?.attemptedAt ? bilingualText("Kiểm tra lại", "Check again") : bilingualText("Kiểm tra câu trả lời", "Check answer")}</button>
+      </fieldset>
+      ${result}
+    </form>
+  `;
+}
+
+function renderLearningDetail(node, activePath) {
+  const article = articleForLearningNode(node);
+  const prerequisites = learningPrerequisites(node);
+  const missing = missingPrerequisites(node);
+  const sourceCount = article?.sourceIds?.length || 0;
+
+  return `
+    <aside class="learning-detail" aria-live="polite">
+      <div class="learning-detail-header">
+        <span class="learning-track">${escapeHtml(learningTrackMeta(node.track))}</span>
+        <span class="learning-status-chip status-${escapeHtml(learningStatus(node.id))}">${learningStatusSymbol(learningStatus(node.id))} ${escapeHtml(learningStatusLabel(learningStatus(node.id)))}</span>
+      </div>
+      <h2>${escapeHtml(learningNodeTitle(node))}</h2>
+      <p class="learning-detail-level">${escapeHtml(learningLevel(node))} · ${sourceCount} ${bilingualText("nguồn được gắn", "linked sources")}</p>
+      <p class="learning-detail-goal">${escapeHtml(learningGoal(node))}</p>
+      <a class="learning-open-article" href="${learningNodeRoute(node)}">${bilingualText("Mở bài viết đầy đủ", "Open full article")} <span aria-hidden="true">→</span></a>
+
+      <section class="learning-detail-section">
+        <h3>${bilingualText("Nền tảng được gợi ý", "Suggested foundations")}</h3>
+        <p>${prerequisites.length
+          ? bilingualText("Những mục này hỗ trợ việc đọc sâu hơn, nhưng không khóa bài viết.", "These entries support deeper reading; they never lock the article.")
+          : bilingualText("Đây là một điểm vào, chưa có kiến thức nền được gợi ý trong bản demo.", "This is an entry point with no suggested foundation in the demo.")}</p>
+        ${prerequisites.length ? `<div class="learning-prerequisite-list">${prerequisites.map((item) => `
+          <button type="button" data-learning-node="${escapeHtml(item.id)}" class="${prerequisiteSatisfied(item.id) ? "is-satisfied" : ""}">
+            <span aria-hidden="true">${learningStatusSymbol(learningStatus(item.id))}</span>
+            <span>${escapeHtml(learningNodeTitle(item))}</span>
+            <small>${prerequisiteSatisfied(item.id) ? bilingualText("đã đáp ứng", "met") : bilingualText("nên xem trước", "suggested first")}</small>
+          </button>
+        `).join("")}</div>` : ""}
+        ${missing.length ? `<p class="learning-detail-note">${bilingualText("Còn " + missing.length + " nền tảng được gợi ý. Bạn có thể học theo bất kỳ thứ tự nào.", missing.length + " suggested foundation" + (missing.length > 1 ? "s" : "") + " remain. You may study in any order.")}</p>` : ""}
+      </section>
+
+      <section class="learning-detail-section">
+        <h3>${bilingualText("Tiến độ của bạn", "Your progress")}</h3>
+        <p>${bilingualText("Đã đọc và đã nắm vững là hai trạng thái khác nhau. Bạn luôn có thể chỉnh lại.", "Read and mastered are separate states. You can change either at any time.")}</p>
+        ${renderLearningStatusControls(node)}
+        <button class="learning-skip-button ${learningStatus(node.id) === "skipped" ? "active" : ""}" type="button" data-learning-status="${learningStatus(node.id) === "skipped" ? "not_started" : "skipped"}" data-learning-node-id="${escapeHtml(node.id)}">
+          ${learningStatus(node.id) === "skipped" ? bilingualText("Đưa lại vào gợi ý", "Return to suggestions") : bilingualText("Bỏ qua mục này lúc này", "Skip this for now")}
+        </button>
+      </section>
+
+      <section class="learning-detail-section learning-detail-check">
+        <h3>${bilingualText("Tự kiểm tra ngắn", "Quick self-check")}</h3>
+        ${renderLearningCheck(node)}
+      </section>
+
+      <p class="learning-rule-note">${escapeHtml(learningRecommendationReason(node, activePath))}</p>
+    </aside>
+  `;
+}
+
+function renderLegacyLearningRoadmap(params) {
+  const requestedPathId = params.get("path");
+  const activePathId = requestedPathId === "all"
+    ? "all"
+    : (learningPaths.some((path) => path.id === requestedPathId) ? requestedPathId : learningProgress.profile.activePathId);
+  const activePath = activePathId === "all"
+    ? {
+      id: "all",
+      title: "Toàn bộ bản đồ",
+      titleEn: "Whole map",
+      description: "Hiển thị tất cả các mục và quan hệ tiên quyết trong bộ dữ liệu demo.",
+      descriptionEn: "Shows all entries and suggested prerequisite relationships in the demo data.",
+      nodeIds: learningNodes.map((node) => node.id),
+    }
+    : (learningPathById(activePathId) || learningPaths[0]);
+  const recommended = recommendedLearningNodes(activePath.id);
+  const selectedCandidate = params.get("node");
+  const selectedNode = learningNodeById(selectedCandidate)
+    || recommended[0]
+    || learningNodes.find((node) => pathNodeIdsWithPrerequisites(activePath.id).has(node.id))
+    || learningNodes[0];
+  const counts = learningProgressCounts();
+  const activeProfile = learningProfiles.find((profile) => profile.id === learningProgress.profile.entryMode) || learningProfiles[0];
+
+  return `
+    ${pageHero(
+      bilingualText("Học theo cách của bạn", "Learn your way"),
+      bilingualText("Lộ trình học tập", "Learning roadmap"),
+      bilingualText("Đây là công cụ tùy chọn: mọi bài viết vẫn luôn mở tự do. Bản đồ chỉ cho thấy các nền tảng được gợi ý và lý do đề xuất.", "This is optional: every article always remains open. The map only shows suggested foundations and why an entry is recommended."),
+      [{ label: bilingualText("Khám phá", "Explore"), href: "#home" }, { label: bilingualText("Lộ trình học", "Learning roadmap") }],
+    )}
+    <section class="page-width learning-page">
+      <div class="learning-summary" aria-label="${bilingualText("Tổng quan tiến độ", "Progress overview")}">
+        <div><span>${counts.read}</span><small>${bilingualText("đã đọc", "read")}</small></div>
+        <div><span>${counts.learning}</span><small>${bilingualText("đang học", "learning")}</small></div>
+        <div><span>${counts.mastered}</span><small>${bilingualText("đã nắm vững", "mastered")}</small></div>
+        <div><span>${counts.review}</span><small>${bilingualText("cần ôn", "review")}</small></div>
+        <div class="learning-summary-note"><strong>${bilingualText("Lưu trên thiết bị này", "Saved on this device")}</strong><span>${bilingualText("Không cần tài khoản; dữ liệu không đồng bộ giữa các thiết bị.", "No account required; data does not sync across devices.")}</span></div>
+      </div>
+
+      <section class="learning-onboarding" aria-labelledby="learning-start-title">
+        <div>
+          <p class="section-kicker">${bilingualText("Bắt đầu tùy chọn", "Optional starting point")}</p>
+          <h2 id="learning-start-title">${bilingualText("Bạn muốn bắt đầu ở đâu?", "Where would you like to start?")}</h2>
+          <p>${bilingualText("Chọn một mô tả gần đúng, hoặc bỏ qua hoàn toàn và tự dùng bản đồ. Đây không phải bài kiểm tra đầu vào.", "Choose the closest description, or skip it and use the map yourself. This is not an entrance test.")}</p>
+        </div>
+        <div class="learning-profile-grid">
+          ${learningProfiles.map((profile) => `
+            <button class="learning-profile ${activeProfile.id === profile.id ? "active" : ""}" type="button" data-learning-profile="${escapeHtml(profile.id)}" aria-pressed="${activeProfile.id === profile.id}">
+              <strong>${escapeHtml(learningProfileLabel(profile))}</strong>
+              <span>${escapeHtml(learningProfileDescription(profile))}</span>
+            </button>
+          `).join("")}
+        </div>
+      </section>
+
+      <section class="learning-branch-section" aria-labelledby="learning-branches-title">
+        <div class="learning-branch-heading">
+          <div>
+            <p class="section-kicker">${bilingualText("Chọn nhánh", "Choose a branch")}</p>
+            <h2 id="learning-branches-title">${escapeHtml(learningPathTitle(activePath))}</h2>
+            <p>${escapeHtml(learningPathDescription(activePath))}</p>
+          </div>
+          <button class="learning-reset-progress" type="button" data-action="clear-learning-progress">${bilingualText("Xóa tiến độ trên thiết bị này", "Clear progress on this device")}</button>
+        </div>
+        <div class="learning-path-grid" role="list">
+          <button class="learning-path-card ${activePath.id === "all" ? "active" : ""}" type="button" data-learning-path="all" aria-pressed="${activePath.id === "all"}">
+            <span>${bilingualText("Toàn bộ", "All")}</span><strong>${bilingualText("Xem cả bản đồ", "View the whole map")}</strong>
+          </button>
+          ${learningPaths.map((path) => `
+            <button class="learning-path-card ${activePath.id === path.id ? "active" : ""}" type="button" data-learning-path="${escapeHtml(path.id)}" aria-pressed="${activePath.id === path.id}">
+              <span>${escapeHtml(path.nodeIds.length)} ${bilingualText("mục chính", "core entries")}</span>
+              <strong>${escapeHtml(learningPathTitle(path))}</strong>
+              <small>${escapeHtml(learningPathDescription(path))}</small>
+            </button>
+          `).join("")}
+        </div>
+      </section>
+
+      <div class="learning-workspace">
+        ${renderLearningMap(activePath.id, selectedNode.id)}
+        ${renderLearningDetail(selectedNode, activePath)}
+      </div>
+
+      <section class="learning-recommendations" aria-labelledby="learning-recommendations-title">
+        <div class="section-header">
+          <div>
+            <p class="section-kicker">${bilingualText("Gợi ý có lý do", "Reasoned suggestions")}</p>
+            <h2 id="learning-recommendations-title" class="section-heading">${bilingualText("Nên học tiếp", "What to explore next")}</h2>
+          </div>
+          <span class="result-count">${recommended.length} ${bilingualText("mục khả dụng", "available entries")}</span>
+        </div>
+        <div class="learning-recommendation-grid">
+          ${recommended.length ? recommended.slice(0, 6).map((node, index) => {
+            const article = articleForLearningNode(node);
+            const missing = missingPrerequisites(node);
+            return `
+              <article class="learning-recommendation">
+                <span class="learning-recommendation-number">${String(index + 1).padStart(2, "0")}</span>
+                <div>
+                  <div class="learning-recommendation-meta"><span>${escapeHtml(learningTrackMeta(node.track))}</span><span class="status-${escapeHtml(learningStatus(node.id))}">${learningStatusSymbol(learningStatus(node.id))} ${escapeHtml(learningStatusLabel(learningStatus(node.id)))}</span></div>
+                  <h3>${escapeHtml(learningNodeTitle(node))}</h3>
+                  <p>${escapeHtml(learningRecommendationReason(node, activePath))}</p>
+                  ${missing.length ? `<small>${bilingualText("Nền tảng gợi ý:", "Suggested foundations:")} ${escapeHtml(missing.map(learningNodeTitle).join(" · "))}</small>` : ""}
+                  <div class="learning-recommendation-actions">
+                    <button type="button" data-learning-node="${escapeHtml(node.id)}">${bilingualText("Xem trong bản đồ", "View in map")}</button>
+                    <a href="#article/${encodeURIComponent(article?.slug || node.articleId)}">${bilingualText("Mở bài viết", "Open article")} →</a>
+                  </div>
+                </div>
+              </article>
+            `;
+          }).join("") : `<div class="empty-state"><h2>${bilingualText("Bạn đã đánh dấu xong nhánh này.", "You have marked this branch complete.")}</h2><p>${bilingualText("Bạn có thể mở lại một mục, chọn nhánh khác hoặc xem toàn bộ bản đồ.", "You can reopen an entry, choose another branch, or view the whole map.")}</p></div>`}
+        </div>
+      </section>
+    </section>
+  `;
+}
+
+function mapFocusSet(categoryId, mode, selectedNodeId) {
+  const categoryMatches = new Set(learningNodes
+    .filter((node) => categoryId === "all" || civitasCategoryForArticle(articleForLearningNode(node)).id === categoryId)
+    .map((node) => node.id));
+  if (mode === "field") return categoryMatches;
+  if (mode === "prerequisites" && selectedNodeId) {
+    const focus = new Set([selectedNodeId]);
+    const addPrerequisites = (node) => learningPrerequisites(node).forEach((prerequisite) => {
+      if (!focus.has(prerequisite.id)) {
+        focus.add(prerequisite.id);
+        addPrerequisites(prerequisite);
+      }
+    });
+    const selected = learningNodeById(selectedNodeId);
+    if (selected) addPrerequisites(selected);
+    return focus;
+  }
+  return new Set(learningNodes.map((node) => node.id));
+}
+
+function renderKnowledgeMap(params) {
+  const categoryId = civitasCategories.some((category) => category.id === params.get("category")) ? params.get("category") : "all";
+  const mode = ["overview", "prerequisites", "field"].includes(params.get("mode")) ? params.get("mode") : "overview";
+  const query = (params.get("q") || "").trim();
+  const matchingNodes = learningNodes.filter((node) => {
+    const article = articleForLearningNode(node);
+    const matchCategory = categoryId === "all" || civitasCategoryForArticle(article).id === categoryId;
+    const text = [learningNodeTitle(node), learningGoal(node), articleCategoryLabel(article)].join(" ").toLocaleLowerCase(currentLanguage);
+    return matchCategory && (!query || text.includes(query.toLocaleLowerCase(currentLanguage)));
+  });
+  const selectedNode = learningNodeById(params.get("node")) || matchingNodes[0] || learningNodes[0];
+  const focusNodeIds = mapFocusSet(categoryId, mode, selectedNode.id);
+  const transform = `translate(${state.learningMap.x}px, ${state.learningMap.y}px) scale(${state.learningMap.scale})`;
+  const edges = learningNodes.flatMap((node) => learningPrerequisites(node).map((prerequisite) => {
+    const start = learningMapPoint(prerequisite.id);
+    const end = learningMapPoint(node.id);
+    const inFocus = focusNodeIds.has(prerequisite.id) && focusNodeIds.has(node.id);
+    return `<line class="civitas-map-edge ${inFocus ? "is-focus" : ""}" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}"></line>`;
+  })).join("");
+  const selectedArticle = articleForLearningNode(selectedNode);
+  const selectedPrerequisites = learningPrerequisites(selectedNode);
+  const selectedRelated = relatedArticlesFor(selectedArticle);
+
+  return `
+    <section class="civitas-page-heading civitas-map-heading"><div class="page-width"><nav class="civitas-breadcrumb" aria-label="Breadcrumb"><a href="#home">${bilingualText("Khám phá", "Explore")}</a><span>/</span><span>${bilingualText("Bản đồ tri thức", "Knowledge map")}</span></nav><p class="civitas-eyebrow">A MAP, NOT A MAZE</p><h1>${bilingualText("Bản đồ tri thức", "The knowledge map")}</h1><p>${bilingualText("Một bức tranh nhỏ về những ý tưởng liên hệ với nhau. Đường nối là gợi ý để đọc sâu hơn, không phải rào cản.", "A small picture of ideas in relation. Lines suggest deeper reading; they are never barriers.")}</p></div></section>
+    <section class="page-width civitas-map-page">
+      <form class="civitas-map-search" data-map-search>${icon("search", 18)}<input name="query" value="${escapeHtml(query)}" autocomplete="off" placeholder="${bilingualText("Tìm một nút trên bản đồ...", "Find a concept on the map...")}" /><button type="submit">${bilingualText("Tìm", "Find")}</button></form>
+      <div class="civitas-map-view-switch" role="group" aria-label="${bilingualText("Chế độ xem bản đồ", "Map viewing mode")}">
+        ${[["overview", bilingualText("Toàn cảnh", "Overview")], ["prerequisites", bilingualText("Nền tảng", "Prerequisites")], ["field", bilingualText("Theo lĩnh vực", "By field")]].map(([value, label]) => `<button type="button" class="${mode === value ? "active" : ""}" data-route="${mapRoute(categoryId, selectedNode.id, value, query)}" aria-pressed="${mode === value}">${label}</button>`).join("")}
+      </div>
+      <div class="civitas-map-layout">
+        <aside class="civitas-map-sidebar"><p>${bilingualText("LĨNH VỰC", "FIELDS")}</p><button class="${categoryId === "all" ? "active" : ""}" type="button" data-route="${mapRoute("all", selectedNode.id, mode, query)}">${bilingualText("Toàn bộ bản đồ", "Whole map")}<small>${learningNodes.length}</small></button>${civitasCategories.map((category) => `<button class="${categoryId === category.id ? "active" : ""}" type="button" data-route="${mapRoute(category.id, "", "field", query)}"><span>${icon(category.icon, 15)}</span>${escapeHtml(civitasCategoryTitle(category))}<small>${learningNodes.filter((node) => civitasCategoryForArticle(articleForLearningNode(node)).id === category.id).length}</small></button>`).join("")}<button class="civitas-map-reset" type="button" data-action="learning-map-reset">${bilingualText("Đặt lại vị trí", "Reset view")}</button></aside>
+        <section class="civitas-map-canvas-panel" aria-label="${bilingualText("Bản đồ tương tác", "Interactive knowledge map")}">
+          <div class="civitas-map-canvas-toolbar"><span>${bilingualText("Kéo vùng trống để di chuyển", "Drag empty space to move")}</span><div><button type="button" data-action="learning-zoom" data-delta="-0.15" aria-label="${bilingualText("Thu nhỏ", "Zoom out")}">−</button><button type="button" data-action="learning-zoom" data-delta="0.15" aria-label="${bilingualText("Phóng to", "Zoom in")}">+</button></div></div>
+          <div class="civitas-map-viewport learning-map-viewport" data-learning-map-viewport tabindex="0" aria-label="${bilingualText("Bản đồ kiến thức", "Knowledge map")}"><div class="civitas-map-canvas learning-map-canvas" data-learning-map-canvas style="transform:${escapeHtml(transform)}"><svg viewBox="0 0 1040 680" aria-hidden="true">${edges}</svg>${learningNodes.map((node) => {
+            const point = learningMapPoint(node.id);
+            const article = articleForLearningNode(node);
+            const active = node.id === selectedNode.id;
+            const muted = !focusNodeIds.has(node.id);
+            return `<button class="civitas-map-node ${active ? "is-selected" : ""} ${muted ? "is-muted" : ""} status-${escapeHtml(learningStatus(node.id))}" type="button" data-map-node="${escapeHtml(node.id)}" aria-pressed="${active}" style="--node-x:${point.x}px;--node-y:${point.y}px"><span class="civitas-map-node-dot" aria-hidden="true">${learningStatusSymbol(learningStatus(node.id))}</span><strong>${escapeHtml(learningNodeTitle(node))}</strong><small>${escapeHtml(articleCategoryLabel(article))}</small></button>`;
+          }).join("")}</div></div>
+          <div class="civitas-map-mobile-list"><p>${bilingualText("Danh sách thay thế", "Text alternative")}</p>${matchingNodes.map((node) => `<button type="button" data-map-node="${escapeHtml(node.id)}">${escapeHtml(learningNodeTitle(node))}<span>${escapeHtml(articleCategoryLabel(articleForLearningNode(node)))}</span></button>`).join("")}</div>
+        </section>
+        <aside class="civitas-map-detail" aria-live="polite"><p class="civitas-aside-label">${escapeHtml(articleCategoryLabel(selectedArticle))}</p><h2>${escapeHtml(learningNodeTitle(selectedNode))}</h2><p>${escapeHtml(selectedArticle?.summary || learningGoal(selectedNode))}</p><div class="civitas-map-detail-status"><span>${escapeHtml(learningLevel(selectedNode))}</span><span class="status-${escapeHtml(learningStatus(selectedNode.id))}">${learningStatusSymbol(learningStatus(selectedNode.id))} ${escapeHtml(learningStatusLabel(learningStatus(selectedNode.id)))}</span></div><a class="civitas-button forest" href="${learningNodeRoute(selectedNode)}">${bilingualText("Đọc bài viết", "Read article")} <span aria-hidden="true">→</span></a><section><h3>${bilingualText("Nền tảng gợi ý", "Suggested foundations")}</h3>${selectedPrerequisites.length ? `<div class="civitas-map-detail-links">${selectedPrerequisites.map((node) => `<button type="button" data-map-node="${escapeHtml(node.id)}">${escapeHtml(learningNodeTitle(node))}<i>→</i></button>`).join("")}</div>` : `<p>${bilingualText("Đây là một điểm vào tốt; chưa có nền tảng nào được gợi ý.", "This is a good entry point; no foundation is suggested.")}</p>`}</section><section><h3>${bilingualText("Trạng thái của bạn", "Your status")}</h3>${renderLearningStatusControls(selectedNode, true)}</section>${selectedRelated.length ? `<section><h3>${bilingualText("Có liên quan", "Related")}</h3><div class="civitas-map-detail-links">${selectedRelated.map((article) => `<a href="#article/${article.slug}">${escapeHtml(article.title)}<i>→</i></a>`).join("")}</div></section>` : ""}</aside>
+      </div>
+    </section>
+  `;
+}
+
+function roadmapStageCards(nodes) {
+  if (!nodes.length) return "";
+  return `<div class="civitas-roadmap-card-list">${nodes.map((node) => {
+    const article = articleForLearningNode(node);
+    const status = learningStatus(node.id);
+    return `<article class="civitas-roadmap-card status-${escapeHtml(status)}"><div><span>${escapeHtml(articleCategoryLabel(article))}</span><h3>${escapeHtml(learningNodeTitle(node))}</h3><p>${escapeHtml(article?.summary || learningGoal(node))}</p><small>${escapeHtml(article?.readTime || "")}</small></div><div class="civitas-roadmap-card-actions"><span>${learningStatusSymbol(status)} ${escapeHtml(learningStatusLabel(status))}</span><a href="${learningNodeRoute(node)}">${bilingualText("Mở bài", "Open")}</a><button type="button" data-map-node="${escapeHtml(node.id)}">${bilingualText("Xem trên bản đồ", "View on map")}</button></div></article>`;
+  }).join("")}</div>`;
+}
+
+function renderLearningRoadmap(params) {
+  const requestedPath = params.get("path");
+  const activePath = learningPathById(requestedPath) || learningPathById(learningProgress.profile.activePathId) || learningPaths[0];
+  const activeNodesSet = pathNodeIdsWithPrerequisites(activePath.id);
+  const activeNodes = learningNodes.filter((node) => activeNodesSet.has(node.id));
+  const foundationNodes = activeNodes.filter((node) => node.track === "foundations");
+  const branchNodes = activeNodes.filter((node) => node.track !== "foundations" && node.id !== "public-policy");
+  const applicationNodes = activeNodes.filter((node) => node.id === "public-policy");
+  const stages = [
+    { number: "01", title: bilingualText("Nền tảng cần thiết", "Useful foundations"), description: bilingualText("Những khái niệm giúp bạn có ngôn ngữ chung trước khi đi sâu hơn.", "Concepts that build shared language before you go further."), nodes: foundationNodes },
+    { number: "02", title: learningPathTitle(activePath), description: learningPathDescription(activePath), nodes: branchNodes.length ? branchNodes : activeNodes.filter((node) => !foundationNodes.includes(node)) },
+    { number: "03", title: bilingualText("Phân tích & ứng dụng", "Analysis & application"), description: bilingualText("Một góc để nối điều bạn vừa đọc với câu hỏi chính sách và đời sống công.", "A place to connect what you read to public policy and shared life."), nodes: applicationNodes.length ? applicationNodes : activeNodes.filter((node) => node.id === "political-legitimacy") },
+  ].filter((stage, index) => stage.nodes.length || index < 2);
+  const recommended = recommendedLearningNodes(activePath.id)[0];
+  const counts = learningProgressCounts();
+  const readCount = Object.keys(learningProgress.readArticles || {}).length;
+  const pickerOpen = state.roadmapGoalOpen || learningProgress.profile.entryMode === "new";
+
+  return `
+    <section class="civitas-page-heading civitas-roadmap-heading"><div class="page-width"><nav class="civitas-breadcrumb" aria-label="Breadcrumb"><a href="#home">${bilingualText("Khám phá", "Explore")}</a><span>/</span><span>${bilingualText("Lộ trình", "Roadmap")}</span></nav><p class="civitas-eyebrow">A PATH THAT BENDS</p><h1>${bilingualText("Lộ trình của tôi", "My learning roadmap")}</h1><p>${bilingualText("Không cần học lại những gì bạn đã biết. Hãy chọn nơi bạn muốn bắt đầu.", "You do not have to relearn what you already know. Choose where you want to begin.")}</p></div></section>
+    <section class="page-width civitas-roadmap-page">
+      <div class="civitas-roadmap-goal-picker ${pickerOpen ? "is-open" : ""}" ${pickerOpen ? "" : "hidden"}>
+        <div><p class="civitas-eyebrow">${bilingualText("CHỌN MỘT HƯỚNG", "CHOOSE A DIRECTION")}</p><h2>${bilingualText("Hôm nay bạn muốn hiểu điều gì hơn?", "What would you like to understand better today?")}</h2><p>${bilingualText("Đây chỉ là điểm bắt đầu. Bạn có thể đổi bất cứ lúc nào và luôn tự mở bài khác.", "This is only a starting point. You can change it anytime and always open another article yourself.")}</p></div>
+        <div class="civitas-roadmap-goals">${learningPaths.map((path) => `<button type="button" data-learning-path="${escapeHtml(path.id)}" class="${activePath.id === path.id ? "active" : ""}"><span>${escapeHtml(learningPathTitle(path))}</span><small>${escapeHtml(learningPathDescription(path))}</small><i>→</i></button>`).join("")}<button type="button" data-learning-profile="self"><span>${bilingualText("Tôi tự chọn", "I will choose myself")}</span><small>${bilingualText("Dùng bản đồ và các trạng thái theo cách của riêng bạn.", "Use the map and your own learning states.")}</small><i>→</i></button></div>
+      </div>
+      <div class="civitas-roadmap-layout">
+        <aside class="civitas-roadmap-sidebar"><p class="civitas-aside-label">${bilingualText("MỤC TIÊU HIỆN TẠI", "CURRENT DIRECTION")}</p><h2>${escapeHtml(learningPathTitle(activePath))}</h2><p>${escapeHtml(learningPathDescription(activePath))}</p><button class="civitas-text-button" type="button" data-action="toggle-roadmap-goals">${bilingualText("Sửa mục tiêu", "Change direction")}</button><a class="civitas-map-link" href="#map">${icon("network", 17)} ${bilingualText("Xem toàn bộ bản đồ", "See the full map")}</a><div class="civitas-roadmap-legend"><span>${learningStatusSymbol("not_started")} ${bilingualText("Chưa học", "Not started")}</span><span>${learningStatusSymbol("learning")} ${bilingualText("Đang học", "Learning")}</span><span>${learningStatusSymbol("mastered")} ${bilingualText("Đã nắm vững", "Mastered")}</span></div><button class="civitas-progress-clear" type="button" data-action="clear-learning-progress">${bilingualText("Xóa tiến độ trên thiết bị", "Clear device progress")}</button></aside>
+        <div class="civitas-roadmap-main"><section class="civitas-roadmap-summary"><div><span>${counts.mastered}</span><small>${bilingualText("đã nắm vững", "mastered")}</small></div><div><span>${counts.learning}</span><small>${bilingualText("đang học", "learning")}</small></div><div><span>${recommended ? 1 : 0}</span><small>${bilingualText("đề xuất tiếp", "next suggestion")}</small></div><div><span>${readCount}</span><small>${bilingualText("bài đã đọc", "articles read")}</small></div></section><section class="civitas-roadmap-stages"><div class="civitas-section-heading"><div><p class="civitas-eyebrow">YOUR CHAPTERS</p><h2>${bilingualText("Những chặng có thể đi theo", "Chapters you can follow")}</h2></div><p>${bilingualText("Đây là các nhóm gợi ý, không phải một chương trình bắt buộc.", "These are suggested groups, not a required curriculum.")}</p></div>${stages.map((stage) => `<section class="civitas-roadmap-stage"><div class="civitas-roadmap-stage-heading"><span>${stage.number}</span><div><h3>${escapeHtml(stage.title)}</h3><p>${escapeHtml(stage.description)}</p></div></div>${roadmapStageCards(stage.nodes)}</section>`).join("")}</section>${recommended ? `<section class="civitas-next-suggestion"><div><p class="civitas-eyebrow">ONE SMALL NEXT STEP</p><h2>${escapeHtml(learningNodeTitle(recommended))}</h2><p>${escapeHtml(learningRecommendationReason(recommended, activePath))}</p><small>${escapeHtml(learningGoal(recommended))}</small></div><div><a class="civitas-button forest" href="${learningNodeRoute(recommended)}">${bilingualText("Mở bài viết", "Open article")} <span aria-hidden="true">→</span></a><button type="button" data-map-node="${escapeHtml(recommended.id)}">${bilingualText("Xem trên bản đồ", "See on map")}</button></div></section>` : ""}</div>
       </div>
     </section>
   `;
@@ -1563,6 +3101,20 @@ function collectSearchRecords() {
     ...countries.map((item) => ({ ...item, type: "country", title: item.name, summary: item.overview || item.form || item.system, text: [item.name, item.region, item.form || "", item.system || "", item.overview || ""].join(" ") })),
     ...ideologies.map((item) => ({ ...item, type: "ideology", title: item.name, summary: item.summary, text: [item.name, item.summary, ...Object.values(item.dimensions || {})].join(" ") })),
     ...events.map((item) => ({ ...item, type: "event", title: item.title, summary: item.summary, text: [item.title, item.summary, item.region || "", ...(item.tags || [])].join(" ") })),
+    ...timelineEvents.map((item) => ({
+      ...item,
+      type: "timeline-event",
+      title: timelineText(item.title),
+      summary: timelineText(item.summary),
+      text: timelineEventSearchText(item),
+    })),
+    ...timelineEntities.map((item) => ({
+      ...item,
+      type: "timeline-entity",
+      title: timelineText(item.names),
+      summary: timelineText(item.overview),
+      text: [timelineText(item.names), item.names?.vi, item.names?.en, ...(item.aliases || []), timelineText(item.overview), ...(item.regions || []).map(timelineRegionTitle), ...(item.modernAssociations || []).map(timelineEntityTitle)].filter(Boolean).join(" "),
+    })),
     ...sources.map((item) => ({ ...item, type: "source", summary: item.description || item.publisher || item.author, text: [item.title, item.publisher || "", item.author || "", item.description || ""].join(" ") })),
   ];
 }
@@ -1591,7 +3143,16 @@ function highlight(value, query) {
 }
 
 function searchLabel(type) {
-  return { article: "Bài tham chiếu", glossary: "Thuật ngữ", country: "Quốc gia", ideology: "Hệ tư tưởng", event: "Sự kiện", source: "Nguồn" }[type] || "Mục";
+  return {
+    article: bilingualText("Bài tham chiếu", "Article"),
+    glossary: bilingualText("Thuật ngữ", "Glossary"),
+    country: bilingualText("Quốc gia", "Country"),
+    ideology: bilingualText("Hệ tư tưởng", "Ideology"),
+    event: bilingualText("Sự kiện", "Event"),
+    "timeline-event": bilingualText("Sự kiện lịch sử", "History event"),
+    "timeline-entity": bilingualText("Thực thể lịch sử", "Historical entity"),
+    source: bilingualText("Nguồn", "Source"),
+  }[type] || bilingualText("Mục", "Record");
 }
 
 function renderSearch(params) {
@@ -1608,7 +3169,7 @@ function renderSearch(params) {
       <div class="tool-bar">
         <span class="result-count">${query ? `${records.length} kết quả cho “${escapeHtml(query)}”` : "Nhập từ khoá để bắt đầu"}</span>
         <div class="filter-group">
-          ${[["all", "Tất cả"], ["article", "Bài viết"], ["glossary", "Thuật ngữ"], ["country", "Quốc gia"], ["ideology", "Hệ tư tưởng"], ["event", "Sự kiện"], ["source", "Nguồn"]].map(([value, label]) => `<button class="filter-button ${type === value ? "active" : ""}" data-route="search?q=${encodeURIComponent(query)}&type=${value}">${label}</button>`).join("")}
+          ${[["all", bilingualText("Tất cả", "All")], ["article", bilingualText("Bài viết", "Articles")], ["glossary", bilingualText("Thuật ngữ", "Glossary")], ["country", bilingualText("Quốc gia", "Countries")], ["ideology", bilingualText("Hệ tư tưởng", "Ideologies")], ["timeline-event", bilingualText("Sự kiện lịch sử", "History events")], ["timeline-entity", bilingualText("Thực thể", "Entities")], ["source", bilingualText("Nguồn", "Sources")]].map(([value, label]) => `<button class="filter-button ${type === value ? "active" : ""}" data-route="search?q=${encodeURIComponent(query)}&type=${value}">${label}</button>`).join("")}
         </div>
       </div>
       <div class="search-results">
@@ -1682,13 +3243,22 @@ function renderApp({ scroll = false } = {}) {
   else if (path.startsWith("country/")) content = renderCountry(decodeURIComponent(path.slice("country/".length)));
   else if (path === "compare" || path === "compare/ideologies" || path === "ideologies") content = renderCompare();
   else if (path.startsWith("ideology/")) content = renderIdeology(decodeURIComponent(path.slice("ideology/".length)));
+  else if (path.startsWith("timeline/event/")) content = renderTimelineEvent(decodeURIComponent(path.slice("timeline/event/".length)));
+  else if (path.startsWith("timeline/entity/")) content = renderTimelineEntity(decodeURIComponent(path.slice("timeline/entity/".length)));
+  else if (path === "timeline/coverage") content = renderTimelineCoverage();
   else if (path === "timeline") content = renderTimeline(params);
+  else if (path === "map") content = renderKnowledgeMap(params);
+  else if (path === "roadmap" || path === "learning") content = renderLearningRoadmap(params);
   else if (path === "sources") content = renderSources();
   else if (path === "search") content = renderSearch(params);
   else if (path === "about" || path === "editorial-policy") content = renderAbout();
   else content = renderNotFound();
 
-  app.innerHTML = translateUiText(`<div class="app-shell">${header(path)}<main id="main" class="page">${content}</main>${footer()}${renderSearchDialog()}</div>`);
+  const routeClass = String(path || "home").split("/")[0].replace(/[^a-z0-9-]/gi, "") || "home";
+  const isLandingRoute = path === "home";
+  const suppressLandingIntro = state.suppressLandingIntro && isLandingRoute;
+  state.suppressLandingIntro = false;
+  app.innerHTML = translateUiText(`<div class="app-shell app-route-${routeClass}${suppressLandingIntro ? " is-language-refresh" : ""}">${header(path)}<main id="main" class="page">${content}</main>${isLandingRoute ? "" : footer()}${renderSearchDialog()}</div>`);
   bindEvents();
   if (scroll) window.scrollTo({ top: 0, behavior: "instant" });
   if (state.searchOpen) setTimeout(() => document.querySelector("#dialog-search-input")?.focus(), 0);
@@ -1705,9 +3275,187 @@ function showToast(message) {
   setTimeout(() => toast.remove(), 3200);
 }
 
+function updateLearningMapTransform() {
+  const canvas = document.querySelector("[data-learning-map-canvas]");
+  if (!canvas) return;
+  canvas.style.transform = "translate(" + state.learningMap.x + "px, " + state.learningMap.y + "px) scale(" + state.learningMap.scale + ")";
+}
+
+function bindLearningMapInteractions() {
+  const viewport = document.querySelector("[data-learning-map-viewport]");
+  if (!viewport) return;
+  let drag = null;
+
+  viewport.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0 || event.target.closest?.(".learning-map-node, .civitas-map-node")) return;
+    drag = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      mapX: state.learningMap.x,
+      mapY: state.learningMap.y,
+    };
+    viewport.setPointerCapture?.(event.pointerId);
+    viewport.classList.add("is-dragging");
+  });
+
+  viewport.addEventListener("pointermove", (event) => {
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    state.learningMap.x = drag.mapX + event.clientX - drag.x;
+    state.learningMap.y = drag.mapY + event.clientY - drag.y;
+    updateLearningMapTransform();
+  });
+
+  const endDrag = (event) => {
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    viewport.releasePointerCapture?.(event.pointerId);
+    viewport.classList.remove("is-dragging");
+    drag = null;
+  };
+
+  viewport.addEventListener("pointerup", endDrag);
+  viewport.addEventListener("pointercancel", endDrag);
+}
+
 function bindEvents() {
   document.querySelectorAll("[data-route]").forEach((node) => {
     node.addEventListener("click", () => navigate(node.dataset.route));
+  });
+
+  document.querySelectorAll("[data-learning-profile]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const profile = learningProfiles.find((item) => item.id === button.dataset.learningProfile);
+      if (!profile) return;
+      selectLearningProfile(profile.id);
+      state.roadmapGoalOpen = false;
+      navigate(learningRoute(profile.pathId));
+    });
+  });
+
+  document.querySelectorAll("[data-learning-path]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const pathId = button.dataset.learningPath;
+      if (pathId !== "all") setLearningPath(pathId);
+      state.roadmapGoalOpen = false;
+      navigate(learningRoute(pathId));
+    });
+  });
+
+  document.querySelectorAll("[data-learning-node]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const nodeId = button.dataset.learningNode;
+      if (!hasLearningNode(nodeId)) return;
+      const current = getRoute();
+      const requestedPathId = current.path === "learning" || current.path === "roadmap" ? current.params.get("path") : "";
+      const pathId = requestedPathId === "all" || learningPaths.some((path) => path.id === requestedPathId)
+        ? requestedPathId
+        : learningProgress.profile.activePathId;
+      navigate(learningRoute(pathId, nodeId));
+    });
+  });
+
+  document.querySelectorAll("[data-map-node]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const nodeId = button.dataset.mapNode;
+      if (!hasLearningNode(nodeId)) return;
+      const current = getRoute();
+      if (current.path === "map") {
+        navigate(mapRoute(current.params.get("category") || "all", nodeId, current.params.get("mode") || "overview", current.params.get("q") || ""));
+      } else {
+        navigate(mapRoute("all", nodeId));
+      }
+    });
+  });
+
+  document.querySelectorAll("[data-bookmark]").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (!toggleBookmark(button.dataset.bookmark)) {
+        showToast(bilingualText("Không thể lưu bài viết trên thiết bị này.", "Could not save this article on this device."));
+        return;
+      }
+      renderApp();
+      showToast(isBookmarked(button.dataset.bookmark)
+        ? bilingualText("Đã lưu bài viết.", "Article saved.")
+        : bilingualText("Đã bỏ lưu bài viết.", "Article removed from saved."));
+    });
+  });
+
+  document.querySelectorAll("[data-article-read]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const read = button.dataset.readValue === "true";
+      if (!setArticleRead(button.dataset.articleRead, read)) {
+        showToast(bilingualText("Không thể cập nhật trạng thái đọc trên thiết bị này.", "Could not update reading status on this device."));
+        return;
+      }
+      renderApp();
+      showToast(read ? bilingualText("Đã đánh dấu đã đọc.", "Marked as read.") : bilingualText("Đã bỏ trạng thái đã đọc.", "Marked as unread."));
+    });
+  });
+
+  document.querySelectorAll("[data-learning-status]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const nodeId = button.dataset.learningNodeId;
+      const status = button.dataset.learningStatus;
+      if (!setLearningStatus(nodeId, status)) {
+        showToast(bilingualText("Không thể lưu tiến độ trên thiết bị này.", "Could not save progress on this device."));
+        return;
+      }
+      renderApp();
+      showToast(bilingualText("Đã cập nhật tiến độ học.", "Learning progress updated."));
+    });
+  });
+
+  document.querySelectorAll("[data-learning-check]").forEach((form) => {
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const checkId = form.dataset.checkId;
+      const value = new FormData(form).get("answer");
+      if (typeof value !== "string" || !recordLearningCheck(checkId, Number(value))) {
+        showToast(bilingualText("Hãy chọn một câu trả lời trước.", "Choose an answer first."));
+        return;
+      }
+      renderApp();
+    });
+  });
+
+  document.querySelectorAll("[data-action='learning-zoom']").forEach((button) => {
+    button.addEventListener("click", () => {
+      const delta = Number(button.dataset.delta);
+      if (!Number.isFinite(delta)) return;
+      state.learningMap.scale = Math.min(1.55, Math.max(0.66, Number((state.learningMap.scale + delta).toFixed(2))));
+      updateLearningMapTransform();
+    });
+  });
+
+  document.querySelectorAll("[data-action='learning-map-reset']").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.learningMap = { x: 0, y: 0, scale: 1 };
+      updateLearningMapTransform();
+    });
+  });
+
+  document.querySelectorAll("[data-action='clear-learning-progress']").forEach((button) => {
+    button.addEventListener("click", () => {
+      const confirmed = window.confirm(bilingualText(
+        "Xóa toàn bộ tiến độ học đã lưu trên trình duyệt này?",
+        "Clear all learning progress saved in this browser?",
+      ));
+      if (!confirmed) return;
+      learningProgress = emptyLearningProgress();
+      try {
+        localStorage.removeItem(LEARNING_PROGRESS_KEY);
+        localStorage.removeItem(LEGACY_LEARNING_PROGRESS_KEY);
+      } catch {}
+      renderApp();
+      showToast(bilingualText("Đã xóa tiến độ học trên thiết bị này.", "Learning progress cleared on this device."));
+    });
+  });
+
+  document.querySelectorAll("[data-action='toggle-roadmap-goals']").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.roadmapGoalOpen = !state.roadmapGoalOpen;
+      renderApp();
+    });
   });
 
   document.querySelectorAll("[data-language]").forEach((button) => {
@@ -1717,7 +3465,11 @@ function bindEvents() {
 
       changeLanguage(language);
       const switcher = button.closest(".language-switch");
-      const render = () => renderApp();
+      const refreshLanding = getRoute().path === "home";
+      const render = () => {
+        if (refreshLanding) state.suppressLandingIntro = true;
+        renderApp();
+      };
 
       if (!switcher || prefersReducedMotion()) {
         render();
@@ -1809,6 +3561,48 @@ function bindEvents() {
     });
   });
 
+  document.querySelectorAll("[data-home-search-form]").forEach((form) => {
+    const input = form.querySelector("input[name='query']");
+    const resultBox = document.querySelector("[data-home-search-results]");
+    input?.addEventListener("input", () => {
+      if (resultBox) resultBox.innerHTML = homeSearchMatches(input.value);
+    });
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const query = new FormData(form).get("query")?.trim() || "";
+      navigate(encyclopediaRoute({ query }));
+    });
+  });
+
+  document.querySelectorAll("[data-encyclopedia-search]").forEach((form) => {
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const current = getRoute();
+      const query = new FormData(form).get("query")?.trim() || "";
+      navigate(encyclopediaRoute({
+        category: current.params.get("category") || "all",
+        level: current.params.get("level") || "all",
+        saved: current.params.get("saved") === "1",
+        query,
+      }));
+    });
+  });
+
+  document.querySelectorAll("[data-map-search]").forEach((form) => {
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const current = getRoute();
+      const query = new FormData(form).get("query")?.trim() || "";
+      navigate(mapRoute(current.params.get("category") || "all", current.params.get("node") || "", current.params.get("mode") || "overview", query));
+    });
+  });
+
+  document.querySelectorAll("[data-scroll-target]").forEach((button) => {
+    button.addEventListener("click", () => {
+      document.getElementById(button.dataset.scrollTarget)?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
+    });
+  });
+
   document.querySelectorAll("[data-search-page-form]").forEach((form) => {
     form.addEventListener("submit", (event) => {
       event.preventDefault();
@@ -1838,7 +3632,31 @@ function bindEvents() {
   document.querySelectorAll("[data-timeline-filter]").forEach((form) => {
     form.addEventListener("change", () => {
       const formData = new FormData(form);
-      navigate(`timeline?region=${encodeURIComponent(formData.get("region"))}&tag=${encodeURIComponent(formData.get("tag"))}`);
+      navigate(timelineRoute({
+        q: formData.get("q") || "",
+        period: formData.get("period") || "all",
+        region: formData.get("region") || "all",
+        country: formData.get("country") || "all",
+        entity: formData.get("entity") || "all",
+        category: formData.get("category") || "all",
+        actor: formData.get("actor") || "all",
+        evidence: formData.get("evidence") || "all",
+        approximate: formData.get("approximate") === "1" ? "1" : "0",
+        start: formData.get("start") || "",
+        end: formData.get("end") || "",
+        zoom: formData.get("zoom") || "period",
+        page: 1,
+        selected: "",
+      }));
+    });
+  });
+
+  document.querySelectorAll("[data-timeline-search]").forEach((form) => {
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const current = getRoute();
+      const filters = normalizeTimelineFilters(current.params);
+      navigate(timelineRoute({ ...filters, q: new FormData(form).get("q")?.trim() || "", page: 1, selected: "" }));
     });
   });
 
@@ -1862,6 +3680,7 @@ function bindEvents() {
       }
     });
   }
+  bindLearningMapInteractions();
 }
 
 window.addEventListener("hashchange", () => {

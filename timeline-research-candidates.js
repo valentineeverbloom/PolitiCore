@@ -1,0 +1,318 @@
+// CIVITAS TIMELINE RESEARCH CANDIDATES
+//
+// This is the editorial research layer. Records stay here before publication so
+// their evidence, uncertainty, and import identity remain auditable. The public
+// timeline only consumes candidates whose status is "published".
+
+export const timelineResearchBatches = [
+  {
+    id: "global-history-2026-10-25-b01",
+    researchedAt: "2026-10-25",
+    importedAt: "2026-10-25",
+    methodology: {
+      vi: "Batch biên tập đầu tiên dùng hồ sơ UNESCO, bảo tàng, lưu trữ quốc gia, chính phủ và tổ chức quốc tế. Mỗi mốc chỉ được công bố khi có nguồn định danh trực tiếp; các khoảng niên đại và diễn giải còn bất định được giữ nguyên trong hồ sơ.",
+      en: "The first editorial batch uses UNESCO, museum, national-archive, government, and intergovernmental records. Each item is published only with a directly identified source; chronological ranges and unresolved interpretations remain explicit in the record.",
+    },
+    reproducibility: {
+      vi: "Lọc deterministically theo candidateId và status trong timeline-imports.js; scripts/validate-timeline.mjs kiểm tra tham chiếu, ngày tháng và trùng lặp.",
+      en: "The import is deterministically filtered by candidateId and status in timeline-imports.js; scripts/validate-timeline.mjs checks references, chronology, and duplicates.",
+    },
+  },
+];
+
+export const timelineResearchCandidates = [
+  {
+    candidateId: "whc-gobekli-tepe-9600-8200-bce",
+    importBatchId: "global-history-2026-10-25-b01", status: "published", reviewedAt: "2026-10-25",
+    fingerprint: "unesco-gobekli-tepe|9600-8200-bce|monumental-enclosures",
+    event: {
+      id: "gobekli-tepe-monumental-enclosures", slug: "gobekli-tepe-cac-cong-trinh-da-tu-9600-8200-tcn",
+      titleVi: "Các công trình đá lớn ở Göbekli Tepe", titleEn: "Monumental enclosures at Göbekli Tepe", originalTitle: "Göbekli Tepe", aliases: ["Göbeklitepe", "Göbekli Tepe archaeological site"],
+      summaryVi: "UNESCO niên đại các cấu trúc cự thạch do cộng đồng săn bắt–hái lượm dựng tại Göbekli Tepe vào khoảng 9.600–8.200 TCN. Công năng nghi lễ là một diễn giải có xác suất, không phải kết luận tuyệt đối.", summaryEn: "UNESCO dates the monumental megalithic structures built by hunter-gatherer communities at Göbekli Tepe to about 9600–8200 BCE. Ritual use is presented as a likely interpretation, not a certainty.",
+      startYear: -9600, endYear: -8200, precision: "range", confidence: "medium", period: "prehistory", categories: ["religion-culture", "science-technology", "local-regional"], regions: ["west-asia-middle-east"], entities: ["gobekli-tepe"], modern: ["turkiye"], locations: ["Germuş Mountains, southeastern Anatolia"], sources: ["unesco-gobekli-tepe"], related: ["catalhoyuk-settlement"],
+      disputes: ["UNESCO describes ritual or funerary use as probable; the precise social functions of the enclosures remain a subject of archaeological interpretation."],
+    },
+    evidence: { sourceIds: ["unesco-gobekli-tepe"], claims: [{ sourceId: "unesco-gobekli-tepe", claim: { vi: "Niên đại 9.600–8.200 TCN, kiến trúc cự thạch và bối cảnh săn bắt–hái lượm.", en: "Dates of 9600–8200 BCE, monumental architecture, and hunter-gatherer context." } }] },
+  },
+  {
+    candidateId: "whc-silk-roads-changan-tianshan-2c-bce-1c-ce",
+    importBatchId: "global-history-2026-10-25-b01", status: "published", reviewedAt: "2026-10-25",
+    fingerprint: "unesco-silk-roads-changan-tianshan|-200-100|network-development",
+    event: {
+      id: "silk-roads-changan-tianshan-network", slug: "mang-luoi-con-duong-to-lua-truong-an-thien-son-hinh-thanh",
+      titleVi: "Mạng lưới Con đường Tơ lụa Trường An – Thiên Sơn hình thành", titleEn: "Chang'an–Tianshan Silk Roads network takes shape", originalTitle: "Silk Roads: the Routes Network of Chang'an-Tianshan Corridor", aliases: ["Silk Road", "Chang'an–Tianshan Corridor", "Tian-shan Corridor"],
+      summaryVi: "UNESCO mô tả hành lang Trường An–Thiên Sơn phát triển giữa thế kỷ II TCN và thế kỷ I CN, kết nối trung tâm Trung Hoa với Trung Á; đây là một phần của mạng lưới rộng hơn chứ không phải một tuyến đường đơn lẻ.", summaryEn: "UNESCO describes the Chang'an–Tianshan corridor as developing between the second century BCE and first century CE, linking central China with Central Asia; it was part of a wider network rather than one single road.",
+      startYear: -200, endYear: 100, precision: "range", confidence: "high", period: "ancient", categories: ["economy-trade", "migration-settlement", "religion-culture", "science-technology"], regions: ["east-asia", "central-asia", "south-asia", "west-asia-middle-east"], entities: ["silk-roads-changan-tianshan"], modern: ["china", "kazakhstan", "kyrgyzstan"], locations: ["Chang'an/Luoyang", "Zhetysu", "Tian-shan"], sources: ["unesco-silk-roads-changan-tianshan"], related: ["qin-unification"],
+    },
+    evidence: { sourceIds: ["unesco-silk-roads-changan-tianshan"], claims: [{ sourceId: "unesco-silk-roads-changan-tianshan", claim: { vi: "Niên đại phát triển, phạm vi liên vùng và trao đổi hàng hóa, tôn giáo, tri thức.", en: "Development horizon, cross-regional extent, and exchange of goods, religions, and knowledge." } }] },
+  },
+  {
+    candidateId: "british-museum-cyrus-babylon-539-bce",
+    importBatchId: "global-history-2026-10-25-b01", status: "published", reviewedAt: "2026-10-25",
+    fingerprint: "british-museum-cyrus-cylinder|-539|babylon",
+    event: {
+      id: "cyrus-conquest-babylon-539-bce", slug: "cyrus-chinh-phuc-babylon-nam-539-tcn",
+      titleVi: "Cyrus chinh phục Babylon", titleEn: "Cyrus conquers Babylon", originalTitle: "The Cyrus Cylinder", aliases: ["Cyrus Cylinder", "Fall of Babylon to Cyrus"],
+      summaryVi: "Trụ Cyrus ghi lại việc Cyrus chinh phục Babylon năm 539 TCN cùng các hoạt động tại thành phố và việc khôi phục tượng thờ trong đền. Hồ sơ này ghi mốc chuyển quyền lực, không suy diễn các khái niệm chính trị hiện đại từ văn bản cổ.", summaryEn: "The Cyrus Cylinder records Cyrus's conquest of Babylon in 539 BCE, activities in the city, and the restoration of cult images in temples. This record marks a transfer of power without projecting modern political concepts onto an ancient text.",
+      startYear: -539, precision: "year", confidence: "high", period: "ancient", categories: ["dynasty-empire", "state-formation", "religion-culture"], regions: ["west-asia-middle-east"], entities: ["achaemenid", "mesopotamia"], modern: ["iraq", "iran"], locations: ["Babylon"], people: ["Cyrus II (Cyrus the Great)"], sources: ["british-museum-cyrus-cylinder"], related: ["achaemenid-empire"],
+    },
+    evidence: { sourceIds: ["british-museum-cyrus-cylinder"], claims: [{ sourceId: "british-museum-cyrus-cylinder", claim: { vi: "Trụ Cyrus ghi mốc chinh phục Babylon năm 539 TCN.", en: "The Cyrus Cylinder records the conquest of Babylon in 539 BCE." } }] },
+  },
+  {
+    candidateId: "whc-chavin-1500-500-bce",
+    importBatchId: "global-history-2026-10-25-b01", status: "published", reviewedAt: "2026-10-25",
+    fingerprint: "unesco-chavin|-1500--500|ceremonial-pilgrimage-centre",
+    event: {
+      id: "chavin-ceremonial-pilgrimage-centre", slug: "chavin-trung-tam-nghi-le-hanh-huong-andes",
+      titleVi: "Chavín là trung tâm nghi lễ và hành hương Andes", titleEn: "Chavín serves as an Andean ceremonial and pilgrimage centre", originalTitle: "Chavin (Archaeological Site)", aliases: ["Chavín de Huántar", "Chavin archaeological site"],
+      summaryVi: "UNESCO mô tả Chavín là trung tâm nghi lễ và hành hương, nơi hội tụ và lan tỏa tư tưởng–tín ngưỡng trong không gian Andes. Niên đại nguồn trình bày theo các thế kỷ rộng, không phải một ngày thành lập duy nhất.", summaryEn: "UNESCO describes Chavín as a ceremonial and pilgrimage centre where ideological and religious practices converged and spread across the Andes. Its chronology is stated as a broad centuries-long horizon, not one foundation date.",
+      startYear: -1500, endYear: -500, precision: "century", confidence: "medium", period: "ancient", categories: ["religion-culture", "local-regional", "science-technology"], regions: ["south-america"], entities: ["chavin"], modern: ["peru"], locations: ["Huari Province, Ancash, Peruvian Andes"], sources: ["unesco-chavin"], related: ["caral-supe"],
+      disputes: ["UNESCO presents a broad 15th–5th century BCE cultural horizon; this record does not assert a single exact founding year."],
+    },
+    evidence: { sourceIds: ["unesco-chavin"], claims: [{ sourceId: "unesco-chavin", claim: { vi: "Bối cảnh niên đại và vai trò nghi lễ–hành hương của Chavín.", en: "Chronological context and Chavín's ceremonial and pilgrimage role." } }] },
+  },
+  {
+    candidateId: "unesco-mahendraparvata-jayavarman-802",
+    importBatchId: "global-history-2026-10-25-b01", status: "published", reviewedAt: "2026-10-25",
+    fingerprint: "unesco-mahendraparvata|802|jayavarman-ii",
+    event: {
+      id: "jayavarman-ii-mahendraparvata-802", slug: "jayavarman-ii-va-mahendraparvata-nam-802",
+      titleVi: "Jayavarman II và nghi thức devarāja tại Mahendraparvata", titleEn: "Jayavarman II and the devarāja rite at Mahendraparvata", originalTitle: "Phnom Kulen: Archaeological Site / Ancient Site of Mahendraparvata", aliases: ["Mahendraparvata", "Jayavarman II", "Phnom Kulen"],
+      summaryVi: "Hồ sơ UNESCO dẫn văn khắc Khmer cổ về năm 802, khi Jayavarman II gắn với Mahendraparvata và nghi thức devarāja. Cách diễn đạt về “độc lập từ Java” được giữ là diễn giải của nguồn, không quy đổi thành quan hệ chủ quyền hiện đại.", summaryEn: "A UNESCO record cites Khmer inscriptions for 802, linking Jayavarman II with Mahendraparvata and the devarāja rite. Wording about “independence from Java” remains a source interpretation rather than a modern sovereignty claim.",
+      startYear: 802, precision: "year", confidence: "medium", period: "classical-postclassical", categories: ["state-formation", "religion-culture", "local-regional"], regions: ["southeast-asia"], entities: ["khmer-empire"], modern: ["cambodia"], locations: ["Mahendraparvata / Phnom Kulen"], people: ["Jayavarman II"], sources: ["unesco-mahendraparvata"], related: ["angkor-empire"],
+      disputes: ["The meaning of the inscription and the phrase often translated as independence from Java are interpreted in scholarship; this entry does not treat them as a settled modern legal claim."],
+    },
+    evidence: { sourceIds: ["unesco-mahendraparvata"], claims: [{ sourceId: "unesco-mahendraparvata", claim: { vi: "Văn khắc được UNESCO dẫn về năm 802, Jayavarman II và nghi thức devarāja.", en: "UNESCO-cited inscriptions concerning 802, Jayavarman II, and the devarāja rite." } }] },
+  },
+  {
+    candidateId: "unesco-bagan-11th-13th-century",
+    importBatchId: "global-history-2026-10-25-b01", status: "published", reviewedAt: "2026-10-25",
+    fingerprint: "unesco-bagan|1000-1299|regional-empire",
+    event: {
+      id: "bagan-regional-empire-11th-13th-century", slug: "bagan-kinh-do-cua-de-che-khu-vuc-phat-giao",
+      titleVi: "Bagan phát triển thành kinh đô của một đế chế khu vực", titleEn: "Bagan develops as the capital of a regional empire", originalTitle: "Bagan", aliases: ["Bagan Period", "Pagan"],
+      summaryVi: "UNESCO mô tả Bagan thế kỷ XI–XIII là kinh đô của một đế chế khu vực và cảnh quan Phật giáo, nơi việc tạo công đức cùng sự xây dựng đền tháp tăng nhanh, đặc biệt vào thế kỷ XIII.", summaryEn: "UNESCO describes eleventh- to thirteenth-century Bagan as the capital of a regional empire and a Buddhist sacred landscape, where merit-making and temple construction expanded rapidly, especially in the thirteenth century.",
+      startYear: 1000, endYear: 1299, precision: "century", confidence: "high", period: "classical-postclassical", categories: ["state-formation", "religion-culture", "local-regional"], regions: ["southeast-asia"], entities: ["bagan"], modern: ["myanmar"], locations: ["Bagan, Ayeyarwady River plain"], sources: ["unesco-bagan"],
+    },
+    evidence: { sourceIds: ["unesco-bagan"], claims: [{ sourceId: "unesco-bagan", claim: { vi: "Bagan thế kỷ XI–XIII là kinh đô của một đế chế khu vực và trung tâm cảnh quan Phật giáo.", en: "Bagan in the eleventh–thirteenth centuries was a regional imperial capital and Buddhist sacred landscape." } }] },
+  },
+  {
+    candidateId: "nps-cahokia-1050-1200",
+    importBatchId: "global-history-2026-10-25-b01", status: "published", reviewedAt: "2026-10-25",
+    fingerprint: "nps-cahokia|1050-1200|mississippian-urban-centre",
+    event: {
+      id: "cahokia-mississippian-urban-centre", slug: "cahokia-trung-tam-do-thi-mississippian",
+      titleVi: "Cahokia là trung tâm đô thị Mississippian lớn", titleEn: "Cahokia becomes a major Mississippian urban centre", originalTitle: "Cahokia Mounds", aliases: ["Cahokia Mounds", "Mississippian Cahokia"],
+      summaryVi: "Nguồn National Park Service mô tả Cahokia là địa điểm khảo cổ lớn nhất của văn hóa Mississippian; ở giai đoạn cực thịnh khoảng 1050–1200 CN, đây là một cộng đồng và trung tâm nghi lễ rộng lớn ở Bắc Mỹ tiền Colombo.", summaryEn: "The National Park Service describes Cahokia as the largest archaeological site of the Mississippian culture; at its zenith around 1050–1200 CE, it was a large community and ceremonial centre in pre-Columbian North America.",
+      startYear: 1050, endYear: 1200, precision: "range", confidence: "high", period: "classical-postclassical", categories: ["state-formation", "religion-culture", "economy-trade", "local-regional"], regions: ["north-america"], entities: ["cahokia"], modern: ["united-states"], locations: ["American Bottom, near present-day St. Louis"], sources: ["nps-cahokia"],
+    },
+    evidence: { sourceIds: ["nps-cahokia"], claims: [{ sourceId: "nps-cahokia", claim: { vi: "Niên đại cực thịnh 1050–1200 CN và vai trò đô thị–nghi lễ Mississippian.", en: "A 1050–1200 CE zenith and Mississippian urban-ceremonial role." } }] },
+  },
+  {
+    candidateId: "unesco-kilwa-indian-ocean-13th-16th-century",
+    importBatchId: "global-history-2026-10-25-b01", status: "published", reviewedAt: "2026-10-25",
+    fingerprint: "unesco-kilwa|1200-1500|indian-ocean-trade",
+    event: {
+      id: "kilwa-indian-ocean-trade-centre", slug: "kilwa-kisiwani-trung-tam-thuong-mai-an-do-duong",
+      titleVi: "Kilwa Kisiwani là trung tâm thương mại Ấn Độ Dương", titleEn: "Kilwa Kisiwani serves as an Indian Ocean trade centre", originalTitle: "Ruins of Kilwa Kisiwani and Ruins of Songo Mnara", aliases: ["Kilwa", "Kilwa Kisiwani", "Songo Mnara"],
+      summaryVi: "UNESCO ghi Kilwa Kisiwani đạt cực thịnh trong thế kỷ XIII–XIV; các thương cảng Swahili tại Kilwa và Songo Mnara kiểm soát một phần đáng kể thương mại Ấn Độ Dương với Arabia, Ấn Độ và Trung Hoa trong thế kỷ XIII–XVI.", summaryEn: "UNESCO records Kilwa Kisiwani's peak in the thirteenth and fourteenth centuries; the Swahili ports of Kilwa and Songo Mnara controlled a substantial part of Indian Ocean trade with Arabia, India, and China in the thirteenth to sixteenth centuries.",
+      startYear: 1200, endYear: 1500, precision: "range", confidence: "high", period: "classical-postclassical", categories: ["economy-trade", "state-formation", "religion-culture"], regions: ["africa", "south-asia", "east-asia", "west-asia-middle-east"], entities: ["kilwa-kisiwani"], modern: ["tanzania"], locations: ["Kilwa Kisiwani", "Songo Mnara", "Swahili Coast"], sources: ["unesco-kilwa"], related: ["mansa-musa-hajj-1324-1325"],
+    },
+    evidence: { sourceIds: ["unesco-kilwa"], claims: [{ sourceId: "unesco-kilwa", claim: { vi: "Đỉnh thịnh vượng thế kỷ XIII–XIV và mạng lưới thương mại Ấn Độ Dương thế kỷ XIII–XVI.", en: "Thirteenth–fourteenth-century prosperity and a thirteenth–sixteenth-century Indian Ocean trade network." } }] },
+  },
+  {
+    candidateId: "unesco-nan-madol-1200-1500",
+    importBatchId: "global-history-2026-10-25-b01", status: "published", reviewedAt: "2026-10-25",
+    fingerprint: "unesco-nan-madol|1200-1500|saudeleur-ceremonial-centre",
+    event: {
+      id: "nan-madol-saudeleur-ceremonial-centre", slug: "nan-madol-trung-tam-nghi-le-saudeleur",
+      titleVi: "Nan Madol là trung tâm nghi lễ của Saudeleur", titleEn: "Nan Madol serves as the Saudeleur ceremonial centre", originalTitle: "Nan Madol: Ceremonial Centre of Eastern Micronesia", aliases: ["Nan Madol", "Saudeleur dynasty", "Pohnpei"],
+      summaryVi: "UNESCO mô tả Nan Madol gồm hơn 100 đảo nhỏ có cung điện, đền, mộ và khu cư trú xây khoảng 1200–1500 CN; các di tích là trung tâm nghi lễ của triều Saudeleur và bằng chứng về thực hành xã hội, tôn giáo phức hợp ở Thái Bình Dương.", summaryEn: "UNESCO describes Nan Madol as more than 100 islets with palaces, temples, tombs, and residential domains built around 1200–1500 CE; the remains formed the ceremonial centre of the Saudeleur dynasty and evidence complex Pacific social and religious practice.",
+      startYear: 1200, endYear: 1500, precision: "range", confidence: "high", period: "classical-postclassical", categories: ["state-formation", "religion-culture", "local-regional", "science-technology"], regions: ["oceania-pacific"], entities: ["nan-madol"], modern: ["micronesia"], locations: ["Pohnpei"], sources: ["unesco-nan-madol"], related: ["lapita-expansion"],
+    },
+    evidence: { sourceIds: ["unesco-nan-madol"], claims: [{ sourceId: "unesco-nan-madol", claim: { vi: "Khoảng xây dựng 1200–1500 CN và vai trò trung tâm nghi lễ Saudeleur.", en: "A 1200–1500 CE construction horizon and role as the Saudeleur ceremonial centre." } }] },
+  },
+  {
+    candidateId: "met-mansa-musa-hajj-1324-1325",
+    importBatchId: "global-history-2026-10-25-b01", status: "published", reviewedAt: "2026-10-25",
+    fingerprint: "met-mansa-musa|1324-1325|hajj",
+    event: {
+      id: "mansa-musa-hajj-1324-1325", slug: "cuoc-hanh-huong-mecca-cua-mansa-musa",
+      titleVi: "Cuộc hành hương Mecca của Mansa Musa", titleEn: "Mansa Musa's pilgrimage to Mecca", originalTitle: "Western and Central Sudan, 1000–1400 A.D.", aliases: ["Mansa Musa hajj", "Mūsā I of Mali"],
+      summaryVi: "Heilbrunn Timeline của Metropolitan Museum ghi cuộc hajj 1324–1325 của Mansa Musa qua Cairo đến Mecca, khiến sự giàu có của Mali được biết đến rộng hơn ở Bắc Phi, thế giới Ả Rập và châu Âu.", summaryEn: "The Metropolitan Museum's Heilbrunn Timeline records Mansa Musa's 1324–1325 hajj through Cairo to Mecca, drawing wider attention in North Africa, the Arab world, and Europe to Mali's wealth.",
+      startYear: 1324, endYear: 1325, precision: "range", confidence: "high", period: "classical-postclassical", categories: ["economy-trade", "religion-culture", "diplomacy-treaty"], regions: ["africa", "west-asia-middle-east"], entities: ["mali-empire"], modern: ["mali", "egypt", "saudi-arabia"], locations: ["Mali", "Cairo", "Mecca"], people: ["Mansa Musa"], sources: ["met-mansa-musa-hajj"], related: ["mali-empire"],
+    },
+    evidence: { sourceIds: ["met-mansa-musa-hajj"], claims: [{ sourceId: "met-mansa-musa-hajj", claim: { vi: "Hành trình hajj 1324–1325 và ý nghĩa liên vùng của Mali.", en: "The 1324–1325 hajj and Mali's cross-regional significance." } }] },
+  },
+  {
+    candidateId: "unesco-machu-picchu-15th-century",
+    importBatchId: "global-history-2026-10-25-b01", status: "published", reviewedAt: "2026-10-25",
+    fingerprint: "unesco-machu-picchu|15th-century|inca-centre",
+    event: {
+      id: "machu-picchu-inca-centre", slug: "machu-picchu-trung-tam-cua-nen-van-minh-inca",
+      titleVi: "Machu Picchu được kiến tạo trong thời Inca", titleEn: "Machu Picchu is built during the Inca period", originalTitle: "Historic Sanctuary of Machu Picchu", aliases: ["Machu Picchu", "La Ciudadela"],
+      summaryVi: "UNESCO xác định Machu Picchu được xây vào thế kỷ XV và bị bỏ lại khi đế chế Inca bị người Tây Ban Nha chinh phục trong thế kỷ XVI. Vai trò chính xác của địa điểm vẫn còn những câu hỏi nghiên cứu mở.", summaryEn: "UNESCO states that Machu Picchu was built in the fifteenth century and abandoned when the Inca Empire was conquered by Spaniards in the sixteenth century. Its exact role remains an open research question.",
+      startYear: 1400, endYear: 1599, precision: "century", confidence: "medium", period: "early-modern", categories: ["state-formation", "religion-culture", "science-technology"], regions: ["south-america"], entities: ["inca", "machu-picchu"], modern: ["peru"], locations: ["Machu Picchu, Peruvian Andes"], sources: ["unesco-machu-picchu"], related: ["inca-expansion"],
+      disputes: ["UNESCO notes that Machu Picchu's exact role in Inca society remains unresolved; this entry does not assign a single definitive function."],
+    },
+    evidence: { sourceIds: ["unesco-machu-picchu"], claims: [{ sourceId: "unesco-machu-picchu", claim: { vi: "Xây thế kỷ XV, bị bỏ lại trong thế kỷ XVI và tình trạng bất định về vai trò chính xác.", en: "Fifteenth-century construction, sixteenth-century abandonment, and uncertainty around its precise role." } }] },
+  },
+  {
+    candidateId: "nps-pueblo-revolt-1680",
+    importBatchId: "global-history-2026-10-25-b01", status: "published", reviewedAt: "2026-10-25",
+    fingerprint: "nps-pueblo-revolt|1680-08-10|new-mexico",
+    event: {
+      id: "pueblo-revolt-1680", slug: "cuoc-khoi-nghia-pueblo-khoi-phat-tai-new-mexico",
+      titleVi: "Khởi nghĩa Pueblo khởi phát ở New Mexico", titleEn: "The Pueblo Revolt begins in New Mexico", originalTitle: "Pueblo of Acoma National Register documentation", aliases: ["Pueblo Revolt", "Po'pay's Revolt", "1680 Pueblo Revolt"],
+      summaryVi: "Theo tư liệu National Park Service, một cuộc nổi dậy phối hợp của các dân tộc Pueblo bắt đầu ngày 10 tháng 8 năm 1680; cư dân Tây Ban Nha sau đó rời Santa Fe ngày 21 tháng 8. Các quá trình tái chinh phục 1692–1693 cần được đọc như một diễn biến tiếp nối, không gộp vào mốc khởi phát.", summaryEn: "According to National Park Service documentation, a coordinated uprising by Pueblo peoples began on 10 August 1680; Spanish residents later left Santa Fe on 21 August. The 1692–93 reconquest process is treated as a subsequent development rather than folded into the opening event.",
+      startYear: 1680, startDate: "1680-08-10", precision: "day", confidence: "high", period: "early-modern", categories: ["movement-revolution", "conflict-peace", "borders-sovereignty", "social-rights"], regions: ["north-america"], entities: ["pueblo-peoples"], modern: ["united-states"], locations: ["New Mexico", "Santa Fe"], people: ["Po'pay"], sources: ["nps-pueblo-revolt"],
+    },
+    evidence: { sourceIds: ["nps-pueblo-revolt"], claims: [{ sourceId: "nps-pueblo-revolt", claim: { vi: "Ngày khởi phát 10/08/1680 và cuộc rút lui khỏi Santa Fe sau đó.", en: "The 10 August 1680 beginning date and subsequent departure from Santa Fe." } }] },
+  },
+  {
+    candidateId: "anri-indonesia-proclamation-1945",
+    importBatchId: "global-history-2026-10-25-b01", status: "published", reviewedAt: "2026-10-25",
+    fingerprint: "anri-indonesia-proclamation|1945-08-17|jakarta",
+    event: {
+      id: "indonesia-independence-proclamation-1945", slug: "tuyen-ngon-doc-lap-indonesia-nam-1945",
+      titleVi: "Tuyên ngôn Độc lập Indonesia", titleEn: "Indonesian Declaration of Independence", originalTitle: "Proklamasi Kemerdekaan Indonesia", aliases: ["Proclamation of Indonesian Independence", "Proklamasi 17 Agustus 1945"],
+      summaryVi: "Tư liệu Lưu trữ Quốc gia Indonesia ghi Soekarno, cùng Mohammad Hatta, đọc Tuyên ngôn Độc lập tại Pegangsaan Timur 56, Jakarta ngày 17 tháng 8 năm 1945; sau đó diễn ra nghi thức kéo cờ đỏ–trắng.", summaryEn: "Indonesia's National Archives records Soekarno, with Mohammad Hatta, reading the Declaration of Independence at 56 Pegangsaan Timur, Jakarta, on 17 August 1945, followed by the red-and-white flag ceremony.",
+      startYear: 1945, startDate: "1945-08-17", precision: "day", confidence: "high", period: "contemporary", categories: ["independence-decolonization", "state-formation", "movement-revolution"], regions: ["southeast-asia"], modern: ["indonesia"], locations: ["Jakarta"], people: ["Soekarno", "Mohammad Hatta"], sources: ["anri-indonesia-proclamation"], related: ["bandung-conference"],
+    },
+    evidence: { sourceIds: ["anri-indonesia-proclamation"], claims: [{ sourceId: "anri-indonesia-proclamation", claim: { vi: "Địa điểm, người đọc và ngày 17/08/1945 của bản Tuyên ngôn.", en: "Place, readers, and 17 August 1945 date of the proclamation." } }] },
+  },
+  {
+    candidateId: "un-resolution-181-1947",
+    importBatchId: "global-history-2026-10-25-b01", status: "published", reviewedAt: "2026-10-25",
+    fingerprint: "un-resolution-181|1947-11-29|palestine",
+    event: {
+      id: "un-resolution-181-1947", slug: "dai-hoi-dong-lien-hop-quoc-thong-qua-nghi-quyet-181",
+      titleVi: "Đại hội đồng LHQ thông qua Nghị quyết 181 (II)", titleEn: "UN General Assembly adopts Resolution 181 (II)", originalTitle: "Future government of Palestine, A/RES/181(II)", aliases: ["UN Partition Plan", "Resolution 181", "A/RES/181(II)"],
+      summaryVi: "Ngày 29 tháng 11 năm 1947, Đại hội đồng LHQ thông qua Nghị quyết 181 (II), đề xuất kế hoạch phân chia kèm liên minh kinh tế: một nhà nước Ả Rập, một nhà nước Do Thái và quy chế quốc tế đặc biệt cho Jerusalem. Đây là văn kiện đề xuất, không phải khẳng định kế hoạch đã được thực hiện nguyên trạng.", summaryEn: "On 29 November 1947, the UN General Assembly adopted Resolution 181 (II), proposing a partition plan with an economic union: an Arab state, a Jewish state, and a special international regime for Jerusalem. It is recorded as a proposal, not as a claim that the plan was implemented as written.",
+      startYear: 1947, startDate: "1947-11-29", precision: "day", confidence: "high", period: "contemporary", categories: ["diplomacy-treaty", "law-constitution", "borders-sovereignty"], regions: ["west-asia-middle-east", "cross-regional-global"], entities: ["united-nations"], modern: ["palestine", "israel"], locations: ["United Nations General Assembly", "Jerusalem"], organizations: ["United Nations General Assembly"], sources: ["un-resolution-181"],
+      disputes: ["This entry describes the resolution's proposal and does not compress the subsequent Palestinian–Israeli history, legal disputes, displacement, or conflict into one outcome claim."],
+    },
+    evidence: { sourceIds: ["un-resolution-181"], claims: [{ sourceId: "un-resolution-181", claim: { vi: "Ngày thông qua và nội dung đề xuất của Nghị quyết 181 (II).", en: "Adoption date and proposed content of Resolution 181 (II)." } }] },
+  },
+  {
+    candidateId: "scio-prc-founding-1949",
+    importBatchId: "global-history-2026-10-25-b01", status: "published", reviewedAt: "2026-10-25",
+    fingerprint: "scio-prc-founding|1949-10-01|beijing",
+    event: {
+      id: "prc-founded-1949", slug: "thanh-lap-cong-hoa-nhan-dan-trung-hoa-nam-1949",
+      titleVi: "Thành lập Cộng hòa Nhân dân Trung Hoa", titleEn: "Founding of the People's Republic of China", originalTitle: "The Founding Ceremony of the People's Republic of China", aliases: ["PRC founding", "1 October 1949"],
+      summaryVi: "Nguồn của Văn phòng Thông tin Quốc vụ viện Trung Quốc ghi lễ thành lập Chính phủ Nhân dân Trung ương của Cộng hòa Nhân dân Trung Hoa tại Quảng trường Thiên An Môn ngày 1 tháng 10 năm 1949.", summaryEn: "A source from China's State Council Information Office records the founding ceremony of the Central People's Government of the People's Republic of China at Tiananmen Square on 1 October 1949.",
+      startYear: 1949, startDate: "1949-10-01", precision: "day", confidence: "high", period: "contemporary", categories: ["state-formation", "movement-revolution", "elections-government"], regions: ["east-asia"], modern: ["china"], locations: ["Tiananmen Square, Beijing"], organizations: ["Central People's Government"], sources: ["scio-prc-founding"],
+    },
+    evidence: { sourceIds: ["scio-prc-founding"], claims: [{ sourceId: "scio-prc-founding", claim: { vi: "Lễ thành lập và ngày 01/10/1949.", en: "The founding ceremony and 1 October 1949 date." } }] },
+  },
+  {
+    candidateId: "mfat-samoa-independence-1962",
+    importBatchId: "global-history-2026-10-25-b01", status: "published", reviewedAt: "2026-10-25",
+    fingerprint: "mfat-samoa|1962-01-01|independence",
+    event: {
+      id: "samoa-independence-1962", slug: "samoa-gianh-doc-lap-nam-1962",
+      titleVi: "Samoa giành độc lập", titleEn: "Samoa achieves independence", originalTitle: "MFAT 75: Apia", aliases: ["Western Samoa independence", "Samoa 1962"],
+      summaryVi: "Theo Bộ Ngoại giao và Thương mại New Zealand, sau gần 50 năm dưới quyền quản lý của New Zealand, Samoa trở thành quốc gia Thái Bình Dương đầu tiên giành độc lập ngày 1 tháng 1 năm 1962. Ngày pháp lý này không nên bị lẫn với ngày quốc khánh 1 tháng 6 hiện nay.", summaryEn: "According to New Zealand's Ministry of Foreign Affairs and Trade, after almost 50 years of New Zealand rule, Samoa became the first Pacific nation to achieve independence on 1 January 1962. This legal date should not be conflated with the present 1 June national holiday.",
+      startYear: 1962, startDate: "1962-01-01", precision: "day", confidence: "high", period: "contemporary", categories: ["independence-decolonization", "state-formation", "diplomacy-treaty"], regions: ["oceania-pacific"], modern: ["samoa"], locations: ["Samoa"], sources: ["mfat-samoa-independence"], related: ["un-decolonization-1960"],
+    },
+    evidence: { sourceIds: ["mfat-samoa-independence"], claims: [{ sourceId: "mfat-samoa-independence", claim: { vi: "Samoa độc lập ngày 01/01/1962 và bối cảnh quản lý của New Zealand.", en: "Samoa's 1 January 1962 independence and New Zealand administration context." } }] },
+  },
+  {
+    candidateId: "nara-voting-rights-act-1965",
+    importBatchId: "global-history-2026-10-25-b01", status: "published", reviewedAt: "2026-10-25",
+    fingerprint: "nara-voting-rights-act|1965-08-06|united-states",
+    event: {
+      id: "voting-rights-act-1965", slug: "dao-luat-quyen-bo-phieu-hoa-ky-nam-1965",
+      titleVi: "Đạo luật Quyền Bỏ phiếu Hoa Kỳ năm 1965", titleEn: "United States Voting Rights Act of 1965", originalTitle: "Voting Rights Act (1965)", aliases: ["Voting Rights Act", "VRA 1965"],
+      summaryVi: "Lưu trữ Quốc gia Hoa Kỳ ghi Tổng thống Lyndon B. Johnson ký Đạo luật Quyền Bỏ phiếu ngày 6 tháng 8 năm 1965. Luật cấm một số thực hành phân biệt trong bỏ phiếu, gồm các bài kiểm tra biết chữ vốn được dùng như điều kiện đăng ký bỏ phiếu.", summaryEn: "The U.S. National Archives records President Lyndon B. Johnson signing the Voting Rights Act on 6 August 1965. The law outlawed discriminatory voting practices, including literacy tests used as prerequisites to voting registration.",
+      startYear: 1965, startDate: "1965-08-06", precision: "day", confidence: "high", period: "contemporary", categories: ["law-constitution", "social-rights", "elections-government"], regions: ["north-america"], modern: ["united-states"], locations: ["Washington, D.C."], people: ["Lyndon B. Johnson"], sources: ["nara-voting-rights-act"],
+    },
+    evidence: { sourceIds: ["nara-voting-rights-act"], claims: [{ sourceId: "nara-voting-rights-act", claim: { vi: "Ngày ký 06/08/1965 và việc cấm các thực hành phân biệt như literacy tests.", en: "The 6 August 1965 signing and ban on discriminatory practices such as literacy tests." } }] },
+  },
+  {
+    candidateId: "naa-australian-referendum-1967",
+    importBatchId: "global-history-2026-10-25-b01", status: "published", reviewedAt: "2026-10-25",
+    fingerprint: "naa-1967-referendum|1967-05-27|australia",
+    event: {
+      id: "australian-referendum-1967", slug: "trung-cau-dan-y-uc-nam-1967-ve-nguoi-ban-dia",
+      titleVi: "Trưng cầu dân ý Úc năm 1967 thông qua sửa đổi hiến pháp về người Bản địa", titleEn: "Australia's 1967 referendum approves constitutional change affecting First Nations peoples", originalTitle: "The 1967 referendum", aliases: ["1967 Indigenous referendum", "Australian Aboriginal referendum", "Constitution Alteration (Aboriginals) 1967"],
+      summaryVi: "Ngày 27 tháng 5 năm 1967, cử tri Úc bỏ phiếu xóa các quy định hiến pháp phân biệt đối xử với người Aboriginal và Torres Strait Islander; 90,77% bỏ phiếu thuận. Nguồn Lưu trữ Quốc gia Úc nhấn mạnh mốc này không tự nó trao quyền bỏ phiếu cho người Bản địa.", summaryEn: "On 27 May 1967, Australian voters approved removal of constitutional references discriminating against Aboriginal and Torres Strait Islander peoples; 90.77% voted yes. Australia's National Archives stresses that the referendum did not itself grant Indigenous people the right to vote.",
+      startYear: 1967, startDate: "1967-05-27", precision: "day", confidence: "high", period: "contemporary", categories: ["law-constitution", "social-rights", "elections-government"], regions: ["oceania-pacific"], entities: ["aboriginal-and-torres-strait-islander-peoples"], modern: ["australia"], locations: ["Australia"], sources: ["naa-1967-referendum"], related: ["un-drip-2007"],
+      disputes: ["The record deliberately avoids the inaccurate claim that the referendum itself granted voting rights; the National Archives notes federal voting rights had been legislated earlier."],
+    },
+    evidence: { sourceIds: ["naa-1967-referendum"], claims: [{ sourceId: "naa-1967-referendum", claim: { vi: "Ngày bỏ phiếu, kết quả 90,77% và giới hạn của tác động pháp lý trực tiếp.", en: "Voting date, 90.77% result, and limits of its direct legal effect." } }] },
+  },
+  {
+    candidateId: "asean-bangkok-declaration-1967",
+    importBatchId: "global-history-2026-10-25-b01", status: "published", reviewedAt: "2026-10-25",
+    fingerprint: "asean-bangkok-declaration|1967-08-08|asean",
+    event: {
+      id: "asean-founded-1967", slug: "tuyen-bo-bangkok-thanh-lap-asean",
+      titleVi: "Tuyên bố Bangkok thành lập ASEAN", titleEn: "Bangkok Declaration establishes ASEAN", originalTitle: "The Founding of ASEAN", aliases: ["ASEAN Declaration", "Bangkok Declaration", "Association of Southeast Asian Nations"],
+      summaryVi: "Ngày 8 tháng 8 năm 1967, đại diện Indonesia, Malaysia, Philippines, Singapore và Thái Lan ký Tuyên bố ASEAN/Bangkok, thành lập Hiệp hội các Quốc gia Đông Nam Á.", summaryEn: "On 8 August 1967, representatives of Indonesia, Malaysia, the Philippines, Singapore, and Thailand signed the ASEAN/Bangkok Declaration, establishing the Association of Southeast Asian Nations.",
+      startYear: 1967, startDate: "1967-08-08", precision: "day", confidence: "high", period: "contemporary", categories: ["international-organization", "diplomacy-treaty", "economy-trade"], regions: ["southeast-asia"], entities: ["asean"], modern: ["indonesia", "malaysia", "philippines", "singapore", "thailand"], locations: ["Bangkok"], organizations: ["ASEAN"], sources: ["asean-founding"], related: ["bandung-conference"],
+    },
+    evidence: { sourceIds: ["asean-founding"], claims: [{ sourceId: "asean-founding", claim: { vi: "Năm quốc gia ký và ngày thành lập ASEAN 08/08/1967.", en: "The five signatories and ASEAN's 8 August 1967 founding date." } }] },
+  },
+  {
+    candidateId: "caricom-chaguaramas-1973",
+    importBatchId: "global-history-2026-10-25-b01", status: "published", reviewedAt: "2026-10-25",
+    fingerprint: "caricom-chaguaramas|1973-07-04|caribbean-community",
+    event: {
+      id: "treaty-of-chaguaramas-1973", slug: "hiep-uoc-chaguaramas-thanh-lap-cong-dong-caribe",
+      titleVi: "Hiệp ước Chaguaramas thành lập Cộng đồng Caribe", titleEn: "Treaty of Chaguaramas establishes the Caribbean Community", originalTitle: "Treaty Establishing the Caribbean Community", aliases: ["CARICOM", "Treaty of Chaguaramas", "Caribbean Community"],
+      summaryVi: "Ngày 4 tháng 7 năm 1973, Barbados, Guyana, Jamaica và Trinidad và Tobago ký Hiệp ước Chaguaramas. Văn kiện đặt mục tiêu hội nhập kinh tế, phối hợp chính sách đối ngoại và hợp tác chức năng; có hiệu lực ngày 1 tháng 8 năm 1973.", summaryEn: "On 4 July 1973, Barbados, Guyana, Jamaica, and Trinidad and Tobago signed the Treaty of Chaguaramas. It set goals of economic integration, foreign-policy coordination, and functional cooperation; it entered into force on 1 August 1973.",
+      startYear: 1973, startDate: "1973-07-04", precision: "day", confidence: "high", period: "contemporary", categories: ["international-organization", "diplomacy-treaty", "economy-trade"], regions: ["caribbean", "south-america"], entities: ["caricom"], modern: ["barbados", "guyana", "jamaica", "trinidad-and-tobago"], locations: ["Chaguaramas, Trinidad and Tobago"], organizations: ["Caribbean Community (CARICOM)"], sources: ["caricom-chaguaramas"],
+    },
+    evidence: { sourceIds: ["caricom-chaguaramas"], claims: [{ sourceId: "caricom-chaguaramas", claim: { vi: "Bốn bên ký, ngày ký 04/07/1973 và ngày có hiệu lực 01/08/1973.", en: "Four signatories, 4 July 1973 signature, and 1 August 1973 entry into force." } }] },
+  },
+  {
+    candidateId: "un-treaty-rarotonga-1985",
+    importBatchId: "global-history-2026-10-25-b01", status: "published", reviewedAt: "2026-10-25",
+    fingerprint: "un-treaty-rarotonga|1985-08-06|nuclear-free-zone",
+    event: {
+      id: "treaty-of-rarotonga-1985", slug: "hiep-uoc-rarotonga-khu-vuc-phi-hat-nhan-nam-thai-binh-duong",
+      titleVi: "Hiệp ước Rarotonga về Khu vực Phi hạt nhân Nam Thái Bình Dương được ký", titleEn: "South Pacific Nuclear Free Zone Treaty is concluded at Rarotonga", originalTitle: "South Pacific Nuclear Free Zone Treaty", aliases: ["Treaty of Rarotonga", "Rarotonga Treaty", "SPNFZ"],
+      summaryVi: "Hiệp ước về Khu vực Phi hạt nhân Nam Thái Bình Dương được ký tại Rarotonga ngày 6 tháng 8 năm 1985 và có hiệu lực ngày 11 tháng 12 năm 1986. Hồ sơ điều ước của LHQ xếp văn kiện trong các chủ đề hạt nhân, môi trường, giải trừ quân bị và vũ khí.", summaryEn: "The South Pacific Nuclear Free Zone Treaty was concluded at Rarotonga on 6 August 1985 and entered into force on 11 December 1986. The UN treaty record indexes it under nuclear matters, environment, disarmament, and arms.",
+      startYear: 1985, startDate: "1985-08-06", precision: "day", confidence: "high", period: "contemporary", categories: ["diplomacy-treaty", "conflict-peace", "environment-disaster"], regions: ["oceania-pacific", "cross-regional-global"], modern: ["australia", "fiji", "new-zealand", "samoa"], locations: ["Rarotonga, Cook Islands"], organizations: ["United Nations Treaty Collection"], sources: ["un-treaty-rarotonga"],
+    },
+    evidence: { sourceIds: ["un-treaty-rarotonga"], claims: [{ sourceId: "un-treaty-rarotonga", claim: { vi: "Ngày ký 06/08/1985, ngày có hiệu lực 11/12/1986 và phạm vi điều ước.", en: "The 6 August 1985 conclusion, 11 December 1986 entry into force, and treaty scope." } }] },
+  },
+  {
+    candidateId: "un-namibia-independence-1990",
+    importBatchId: "global-history-2026-10-25-b01", status: "published", reviewedAt: "2026-10-25",
+    fingerprint: "un-namibia|1990-03-21|independence",
+    event: {
+      id: "namibia-independence-1990", slug: "namibia-gianh-doc-lap-nam-1990",
+      titleVi: "Namibia giành độc lập", titleEn: "Namibia achieves independence", originalTitle: "The UN's role in Namibian Independence", aliases: ["Namibian independence", "UNTAG", "Namibia 1990"],
+      summaryVi: "Theo Liên Hợp Quốc tại Namibia, Namibia trở thành quốc gia độc lập ngày 21 tháng 3 năm 1990 sau tiến trình bầu cử tự do và công bằng dưới giám sát của LHQ. Đây là một trường hợp quan trọng của phi thực dân hóa và gìn giữ hòa bình, nhưng không làm giản lược lịch sử xung đột dài hơn.", summaryEn: "According to the United Nations in Namibia, Namibia became independent on 21 March 1990 after a UN-supervised process of free and fair elections. It is an important case in decolonization and peacekeeping without reducing its longer conflict history to one event.",
+      startYear: 1990, startDate: "1990-03-21", precision: "day", confidence: "high", period: "contemporary", categories: ["independence-decolonization", "elections-government", "conflict-peace"], regions: ["africa"], entities: ["united-nations"], modern: ["namibia"], locations: ["Namibia"], organizations: ["United Nations Transition Assistance Group (UNTAG)"], sources: ["un-namibia-independence"], related: ["un-decolonization-1960"],
+    },
+    evidence: { sourceIds: ["un-namibia-independence"], claims: [{ sourceId: "un-namibia-independence", claim: { vi: "Ngày độc lập 21/03/1990 và vai trò giám sát bầu cử của LHQ.", en: "The 21 March 1990 independence date and UN-supervised electoral process." } }] },
+  },
+  {
+    candidateId: "canada-nunavut-creation-1999",
+    importBatchId: "global-history-2026-10-25-b01", status: "published", reviewedAt: "2026-10-25",
+    fingerprint: "canada-nunavut|1999-04-01|territory-creation",
+    event: {
+      id: "nunavut-creation-1999", slug: "nunavut-tro-thanh-lanh-tho-rieng-cua-canada",
+      titleVi: "Nunavut trở thành lãnh thổ riêng của Canada", titleEn: "Nunavut becomes a separate Canadian territory", originalTitle: "Nunavut", aliases: ["Nunavut Act", "Nunavut 1999", "Inuit land claims"],
+      summaryVi: "Theo Chính phủ Canada, Đạo luật Nunavut có hiệu lực ngày 1 tháng 4 năm 1999, tạo Nunavut như một lãnh thổ riêng. Việc hình thành lãnh thổ gắn với thỏa thuận yêu sách đất đai; lập pháp Nunavut vận hành bằng đồng thuận, không theo các đảng chính trị.", summaryEn: "According to the Government of Canada, the Nunavut Act took effect on 1 April 1999, creating Nunavut as a separate territory. Its creation was connected to a land-claims agreement; Nunavut's legislature operates by consensus rather than political parties.",
+      startYear: 1999, startDate: "1999-04-01", precision: "day", confidence: "high", period: "contemporary", categories: ["state-formation", "law-constitution", "social-rights"], regions: ["north-america"], entities: ["nunavut"], modern: ["canada"], locations: ["Nunavut"], organizations: ["Legislative Assembly of Nunavut"], sources: ["canada-nunavut"], related: ["un-drip-2007"],
+    },
+    evidence: { sourceIds: ["canada-nunavut"], claims: [{ sourceId: "canada-nunavut", claim: { vi: "Ngày có hiệu lực 01/04/1999, bối cảnh yêu sách đất đai và cơ chế đồng thuận.", en: "The 1 April 1999 effective date, land-claims context, and consensus governance." } }] },
+  },
+  {
+    candidateId: "un-south-sudan-independence-2011",
+    importBatchId: "global-history-2026-10-25-b01", status: "published", reviewedAt: "2026-10-25",
+    fingerprint: "un-south-sudan|2011-07-09|independence",
+    event: {
+      id: "south-sudan-independence-2011", slug: "nam-sudan-tuyen-bo-doc-lap-nam-2011",
+      titleVi: "Nam Sudan tuyên bố độc lập", titleEn: "South Sudan declares independence", originalTitle: "South Sudan", aliases: ["South Sudan independence", "Republic of South Sudan", "South Sudan 2011"],
+      summaryVi: "Theo Liên Hợp Quốc, Nam Sudan tách khỏi Sudan ngày 9 tháng 7 năm 2011 sau trưng cầu dân ý tháng 1 được quốc tế giám sát; Đại hội đồng LHQ kết nạp nước này ngày 14 tháng 7. Mốc này được đặt trong tiến trình hòa bình hậu xung đột kéo dài.", summaryEn: "According to the United Nations, South Sudan separated from Sudan on 9 July 2011 after an internationally monitored January referendum; the UN General Assembly admitted it on 14 July. The event is placed within a longer post-conflict peace process.",
+      startYear: 2011, startDate: "2011-07-09", precision: "day", confidence: "high", period: "contemporary", categories: ["independence-decolonization", "borders-sovereignty", "conflict-peace", "state-formation"], regions: ["africa"], entities: ["united-nations"], modern: ["south-sudan", "sudan"], locations: ["South Sudan", "Juba"], organizations: ["United Nations"], sources: ["un-south-sudan"], related: ["un-decolonization-1960"],
+    },
+    evidence: { sourceIds: ["un-south-sudan"], claims: [{ sourceId: "un-south-sudan", claim: { vi: "Ngày độc lập 09/07/2011, trưng cầu dân ý và việc kết nạp LHQ.", en: "The 9 July 2011 independence date, referendum, and UN admission." } }] },
+  },
+];
